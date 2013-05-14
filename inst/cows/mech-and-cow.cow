@@ -1,0 +1,22 @@
+$sthguoht = $thoughts;
+if ( $thoughts eq "\\" ) {
+	$sthguoht = "/";
+}
+$the_cow = <<"EOC";
+   $thoughts                               ,-----.
+   $sthguoht                               |     |
+   $thoughts                            ,--|     |-.
+   $sthguoht                     __,----|  |     | |
+   $thoughts                   ,;::     |  `_____' |
+   $sthguoht                   `._______|    i^i   |
+   $thoughts                            `----| |---'| .
+   $sthguoht                       ,-------._| |== ||//
+   $thoughts                       |       |_|P`.  /'/
+   $sthguoht                       `-------' 'Y Y/'/'
+   $thoughts                                 .==\ /_\
+   ^__^                             /   /'|  `i
+   ($eyes)\_______                   /'   /  |   |
+   (__)\       )\\/\\             /'    /   |   `i
+    $tongue||----w||           ___,;`----'.___L_,-'`\__
+      ||     ||          i_____;----\.____i""\____\
+EOC
