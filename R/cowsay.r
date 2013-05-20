@@ -28,7 +28,7 @@
 #' }
 #' 
 #' @export
-cowsay <- function (message, cow='default.cow', eyes='oo', tongue'  ', wrap=40,
+cowsay <- function (message, cow='default.cow', eyes='oo', tongue='  ', wrap=40,
                     think=F,
                     # TODO: a better way to do the below.
                     style=c('borg', 'dead', 'greedy', 'paranoid', 'stoned', 'tired', 'wired', 'young')) {
@@ -100,4 +100,75 @@ cow.styles <- list(
 construct.balloon <- function (message) {
 }
 
+get.cow <- function (cowpath, eyes, thoughts, tongue) {
+    # 1. try R
+    env <- new.env()
+    env$eyes <- eyes
+    env$thoughts <- thoughts
+    env$tongue <- tongue
+    cow <- tryCatch(source(cowpath, local=env, verbose=F, echo=F, print.eval=F),
+                    error = function (...) -1,
+                    warning = function (...) -1)
+    if (cow != -1) {
+        return(cow)
+    }
 
+    # 2. try Perl (if we have perl)
+    TODO
+
+    # 3. try reading it in, removing the `$the_cow << EOC;` and `EOC` lines.
+    cow <- read.cow.plain(cowpath)
+
+    # FINALLY: gsub $eyes, $thoughts, $tongue
+    cow <- gsubv(c('$eyes', '$thoughts', '$tongue'),
+                 c(env$eyes, env$thoughts, env$tongue),
+                 cow, fixed=T)
+    return(cow)
+}
+
+# TODO: need to escape eyes: test with eyes "" or "' or '" or ''
+# TODO: problem with backslashes for thoughts. shQuote having problems.
+# BAH   -- have to escape backsashes yet again for Perl (?)
+read.cow.perl <- function (cowfile, eyes, thoughts, tongue) {
+    PERL <- Sys.which('perl')
+    if (PERL != '') {
+        cmd <- paste(shQuote(PERL),
+                     '-e',
+                     shQuote(
+                         # NOTE: MUST USE SINGLE QUOTES FOR PERL STRINGS if
+                         #  you want to avoid $asdf being interpreted.
+                         # NOTE: problem with backslash at the end of th string
+                         # perl -e "print '\\'" gives an error because of \'
+                         # being interpreted as a quote?
+                         paste0('$thoughts=', shQuote(thoughts), '; ',
+                                '$eyes=', shQuote(eyes), '; ',
+                                '$tongue=', shQuote(tongue), '; ',
+                                'do ', shQuote(cowfile), '; ',
+                                'print $the_cow'
+                         )
+                     ))
+        return(cmd)
+    }
+}
+
+read.cow.plain <- function (cowfile) {
+    lines <- readLines(cowfile)
+    thecow <- grep('\\$the_cow *<< *', lines)
+    if (length(thecow)) {
+        cowline <- lines[thecow[1]]
+        # trim out everything up to & including the '$the_cow << EOC;' line.
+        lines <- lines[(thecow[1] + 1):length(lines)]
+
+        # trim out everything after & including the final 'EOC' line.
+        m <- regexpr('\\$the_cow *<< *"?([A-Za-z_]+)"? *; *$', cowline, perl=T)
+        st <- attr(m, 'capture.start')
+        if (m != -1) {
+            EOC <- substr(cowline, st, st + attr(m, 'capture.length') - 1)
+            endline <- grep(paste0('^', EOC, ' *$'), lines)
+            if (length(endline)) {
+                lines <- lines[1:endline]
+            }
+        }
+    }
+    return(paste(lines, collapse='\n'))
+}
