@@ -1,16 +1,8 @@
 ##
 ## A cow with three eyes, brought to you by dpetrou@csua.berkeley.edu
 ##
-#$extra = chop($eyes);
-#$eyes .= ($extra x 2);
-eyes <- paste0(substr(eyes, 1, 2), substr(eyes, 2, 2))
-the_cow <- gsubv(
-    c('$thoughts', '$eyes', '$tongue'),
-    c(thoughts, eyes, tongue),
-'
         $thoughts  ^___^
          $thoughts ($eyes)\\_______
            (___)\\       )\\/\\
             $tongue  ||----w |
                 ||     ||
-')

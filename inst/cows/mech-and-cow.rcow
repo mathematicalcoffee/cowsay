@@ -1,29 +1,20 @@
-#$sthguoht = $thoughts
-#if ($thoughts eq '\\') {
-#    $sthguoht = '/'
-#}
-sthguoht <- thoughts
-if (thoughts == '\\') {
-    sthguoht <- '/'
-}
-the_cow <- gsubv(
-    c('$sthguoht', '$thoughts', '$eyes', '$tongue'),
-    c(sthguoht, thoughts, eyes, tongue),
-'
-   $thoughts                               ,-----.
-   $sthguoht                               |     |
-   $thoughts                            ,--|     |-.
-   $sthguoht                     __,----|  |     | |
-   $thoughts                   ,;::     |  `_____' |
-   $sthguoht                   `._______|    i^i   |
-   $thoughts                            `----| |---'| .
-   $sthguoht                       ,-------._| |== ||//
-   $thoughts                       |       |_|P`.  /'/
-   $sthguoht                       `-------' 'Y Y/'/'
-   $thoughts                                 .==\ /_\
+## mecha cow!
+##
+## Patch from Thom May
+                                   ,-----.
+                                   |     |
+                                ,--|     |-.
+                         __,----|  |     | |
+                       ,;::     |  `_____' |
+                       `._______|    i^i   |
+                                `----| |---'| .
+                           ,-------._| |== ||//
+                           |       |_|P`.  /'/
+                           `-------' 'Y Y/'/'
+                                     .==\ /_\
    ^__^                             /   /'|  `i
-   ($eyes)\_______                   /'   /  |   |
-   (__)\       )\\/\\             /'    /   |   `i
-    $tongue||----w||           ___,;`----'.___L_,-'`\__
-      ||     ||          i_____;----\.____i""\____\
-', fixed=T)
+   (oo)\_______                   /'   /  |   |
+   (__)\       )\/\             /'    /   |   `i
+       ||----w |           ___,;`----'.___L_,-'`\__
+       ||     ||          i_____;----\.____i""\____\
+
