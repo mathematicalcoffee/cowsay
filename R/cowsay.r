@@ -16,24 +16,14 @@
 #'               By default, no style is applied.
 #'               See details for more styles.
 #'
-#' The available styles are:
-#'
-#' \describe{
-#'   \item{borg}{the cow looks like a Borg}
-#'   \item{dead}{the cow is dead (!)}
-#'   \item{greedy}{the cow is greedy}
-#'   \item{paranoid}{the cow is paranoid}
-#'   \item{stoned}{the cow is stoned}
-#'   \item{tired}{the cow is sleepy}
-#'   \item{wired}{the cow has had too much caffeine}
-#'   \item{young}{the cow in its younger days}
-#' }
-#' 
+#' see `cow.styles` for the list of cow styles.
 #' @export
+#' @family cowsay
+#' @examples
+#' randomcowsay('MOOOOO')
 cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=60,
                     think=F,
-                    # TODO: a better way to do the below.
-                    style=c('borg', 'dead', 'greedy', 'paranoid', 'stoned', 'tired', 'wired', 'young')) {
+                    style=c('borg', 'dead', 'default', 'greedy', 'paranoid', 'stoned', 'tired', 'wired', 'young')) {
 
 
     if (!missing(style)) {
@@ -45,14 +35,14 @@ cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=60,
     if (!is.null(style)) {
         s <- cow.styles[[style]]
         if (!is.null(s$eyes)) eyes <- s$eyes
-        if (!is.null(s$tongue)) eyes <- s$tongue
+        if (!is.null(s$tongue)) tongue <- s$tongue
     }
     eyes <- format(substring(eyes, 1, 2), width=2)
-    tongue <- format(substring(eyes, 1, 2), width=2)
+    tongue <- format(substring(tongue, 1, 2), width=2)
     thoughts <- ifelse(think, 'o', '\\')
     
     # convert the cow into a path
-    cowpath <- get.cowpath(cow)
+    cowpath <- get.cowfile(cow)
     
     # get the cow.
     cowstring <- get.cow(cowpath, eyes=eyes, tongue=tongue, thoughts=thoughts)
@@ -65,25 +55,46 @@ cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=60,
     messagestring <- construct.balloon(message, think=think)
 
     the_cow <- paste(messagestring, cowstring, sep='\n')
+    attr(the_cow, 'cowtype') = attr(cowstring, 'cowtype')
     
     message(the_cow)
     return(invisible(the_cow))
 }
 
-# ---- below here, done.
- 
+#' cowsay with a random cow.
+#'
+#' The cow, style, and think-style are all randomized (the eyes/tongue are not,
+#'  but if the style gets randomized then that often specifies the eyes/tongue).
+#'
+#' If any of the arguments `cow`, `style` or `think` are given, this overrides
+#'  the randomness for that argument.
+#'
+#' @family cowsay
+#' @export
+#' @examples
+#' randomcowsay('MOOOOO')
+randomcowsay = function (message, cow=NULL, style=NULL, think=NULL, ...) {
+    if (is.null(cow)) cow = sample(list.cows(), 1)
+    if (is.null(style)) style = sample(names(cow.styles), 1)
+    if (is.null(think)) think = runif(1) < .5
+    # TODO: random eyes, tongue?
+
+    cowsay(message, cow=cow, style=style, think=think, ...)
+}
+
 #' Lists the currently-installed cows.
 #'
 #' This lists all the `*.cow`, `*.rcow` files found under `path`.
 #'
-#' @param path: the directory to list all cows under, default being those
-#'              installed in the cowsay package.
+#' @param path {character vector|NULL} path(s) to list the cows under. If NULL,
+#'              the cowpath is used (see \code{\link{get.cowpaths}}).
 #' @param ...: passed to \code{\link[base]{list.files}}.
-#' @return a character vector of cow files installed with the cowsay package.
+#' @return a character vector of cow files found in the path.
 #' @seealso \code{\link[base]{list.files}}
 #' @export
 #' @family cow styles
-list.cows <- function (path=system.file('cows', package='cowsay'), ...) {
+list.cows <- function (path=NULL, ...) {
+    if (is.null(path)) path=get.cowpaths()
     list.files(path, pattern='*.r?cow', ...)
 }
 
@@ -94,6 +105,7 @@ list.cows <- function (path=system.file('cows', package='cowsay'), ...) {
 #' \describe{
 #'   \item{borg}{the cow looks like a Borg}
 #'   \item{dead}{the cow is dead (!)}
+#'   \item{default}{the default plain cow}
 #'   \item{greedy}{the cow is greedy}
 #'   \item{paranoid}{the cow is paranoid}
 #'   \item{stoned}{the cow is stoned}
@@ -108,6 +120,7 @@ list.cows <- function (path=system.file('cows', package='cowsay'), ...) {
 cow.styles <- list(
     borg=list(eyes='=='),
     dead=list(eyes='XX', tongue='U'),
+    default=list(eyes='OO'),
     greedy=list(eyes='$$'),
     paranoid=list(eyes='@@'),
     stoned=list(eyes='**', tongue='U'),
@@ -116,42 +129,82 @@ cow.styles <- list(
     youthful=list(eyes='..')
 )
 
-#TODO: Sys.getenv('COWPATH') and split on colon!!
 #' Looks for a particular cow.
 #'
 #' Looks for cows in this order:
 #'
-#' 1. The corresponding R cow (`{cow}.rcow`) in the package files
-#' 2. In `/usr/share/cowsay/cows` for a Perl cow (will only be here if you have
-#'     the original cowsay installed).
+#' 1. The corresponding R cow (`{cow}.rcow`) in the cowpath in order;
+#' 2. a Perl/plain cow with extension '.cow' (e.g. you downloaded a cow pack
+#'     and have not ported them to rcows or plaincows yet)
 #'
 #' Note that the `cow` should NOT have the extension
 #'  (i.e. "three-eyes", not "three-eyes.cow")
 #' @inheritParams cowsay
-#' @return
+#' @return {character} the path to the first matching cow on the cowpath, or
+#'  NULL if not found.
 #' @family cow styles
 #' @examples
-#' get.cowpath('default')
-#' get.cowpath('three-eyes')
+#' get.cowfile('default')
+#' get.cowfile('three-eyes')
 #' @export
-get.cowpath <- function (cow) {
+get.cowfile <- function (cow) {
     # strip extension
     cow = sub('\\.r?cow$', '', cow)
 
-    # 1. look for an rcow
-    cowfile = system.file('cows', paste0(cow, '.rcow'), package='cowsay')
-    if (file.exists(cowfile))
-        return(cowfile)
+    # get search path
+    paths = get.cowpaths()
 
-    # 2. look for a Perl cow
-    cowfile = file.path
-    has.ext <- grepl('\\.r?cow$', cow)
+    # 1. look for an rcow
+    cowfile = file.path(paths, paste0(cow, '.rcow'))
+    if (any(file.exists(cowfile))) {
+        # return first cow on path that matches
+        return(cowfile[file.exists(cowfile)][1])
+    }
     
-    if (!has.ext) cow <- paste0(cow, c('.rcow', '.cow'))
-        
-    candidates <- cow
-    # look in system.file('cows', package='cowsay')
-    # look in /usr/share/cowsay/cows?
+    # 2. look for a Perl cow
+    cowfile = file.path(paths, paste0(cow, '.cow'))
+    if (any(file.exists(cowfile))) {
+        # return first cow on path that matches
+        return(cowfile[file.exists(cowfile)][1])
+    }
+
+    return(NULL)
+}
+
+#' Path to cows if you install from the repositories
+.sys.cowpath = '/usr/share/cowsay/cows'
+
+#' Returns the search path for cows.
+#'
+#' * if environment variable `$COWPATH` is set, we use that.
+#' * we always include the cows installed with this package.
+#' * we do NOT include '/usr/share/cowsay/cows'.
+#'
+#' Order matters; if a particular cow is found in one of the earlier paths, we
+#'  will not bother looking at the later paths (subject to the rules in
+#'  \code{\link{get.cowfile}}: Rcows are preferred over Perl cows).
+#' 
+#' @return {character vector} directories that cows will be looked for under.
+#' @family cow styles
+#' @export
+get.cowpaths = function() {
+    # 1. COWPATH
+    paths = Sys.getenv('COWPATH')
+    if (paths != "") {
+        paths = strsplit(paths, .Platform$path.sep, fixed=T)[[1]]
+    } else {
+        paths = NULL
+    }
+
+    # 2. System path
+    paths = c(paths, system.file('cows', package='cowsay'))
+
+    # 3. '/usr/share/cowsay/cows' (if exists)
+    #if (isTRUE(file.info(.sys.cowpath)$isdir)) {
+    #    paths = c(paths, .sys.cowpath)
+    #}
+
+    return(paths)
 }
 
 #' Trims a message to a particular width.
@@ -253,18 +306,23 @@ get.cow <- function (cowfile, eyes, thoughts, tongue) {
     if (grepl('\\.rcow$', cowfile)) {
         # 1. try R
         cow <- read.cow.r(cowfile, eyes=eyes, thoughts=thoughts, tongue=tongue)
+        attr(cow, 'cowtype') <- 'R'
 
     # 2. If it's a Perl cow, read it in as such
     } else if (is.perl.cow(cowfile)) {
         PERL <- Sys.which('perl')
-        if (PERL != '')
+        if (PERL != '') {
             cow <- read.cow.perl(cowfile, eyes=eyes, thoughts=thoughts, tongue=tongue)
-        else
+            attr(cow, 'cowtype') <- 'perl'
+        } else {
             cow <- read.cow.noperl(cowfile, eyes=eyes, thoughts=thoughts, tongue=tongue)
+            attr(cow, 'cowtype') <- 'noperl'
+        }
 
     # 3. Otherwise, it's a plain cow.
     } else {
         cow <- read.cow.plain(cowfile, eyes=eyes, thoughts=thoughts, tongue=tongue)
+        attr(cow, 'cowtype') <- 'plain'
     }
 
     return(cow)
@@ -327,11 +385,12 @@ read.cow.r <- function (cowfile, eyes, thoughts, tongue) {
                                          e$message),
                                  call.=F)
                         }))
+       
+        # update values
+        eyes <- env$eyes
+        thoughts <- env$thoughts
+        tongue <- env$tongue
     }
-    # update values
-    eyes <- env$eyes
-    thoughts <- env$thoughts
-    tongue <- env$tongue
 
     # read the plain cow
     cow <- read.cow.plain(cowfile, eyes, thoughts, tongue) 
@@ -361,6 +420,8 @@ read.cow.r <- function (cowfile, eyes, thoughts, tongue) {
 read.cow.plain <- function (cowfile, eyes, thoughts, tongue) {
     lines <- readLines(cowfile)
     lines <- lines[grep('^#', lines, inv=T)]
+    # add newline at end
+    if (!grepl('^\\s*$', lines[length(lines)])) lines=c(lines, '')
     cow <- paste(lines, collapse="\n") 
     cow <- gsubv(c('$eyes', '$thoughts', '$tongue'),
                  c(eyes, thoughts, tongue),
@@ -377,7 +438,7 @@ read.cow.plain <- function (cowfile, eyes, thoughts, tongue) {
 #' @example
 #' \dontrun{
 #' # if you have the original cowsay installed on your system...
-#' cowfile <- '/usr/share/cowsay/cows/three-eye.cow'
+#' cowfile <- '/usr/share/cowsay/cows/three-eyes.cow'
 #' cat(read.cow.perl(cowfile, eyes="Oo", thoughts="\\", tongue="U"))
 #' #         \  ^___^
 #' #          \ (Ooo)\_______
@@ -404,6 +465,8 @@ read.cow.perl <- function (cowfile, eyes, thoughts, tongue, perl=Sys.which('perl
         if (length(res) == 0) {
             warning("The resulting cow was empty; error in the cowfile?")
         } else {
+            # add newline at end
+            if (!grepl('^\\s*$', res[length(res)])) res=c(res, '')
             res <- paste(res, collapse="\n")
         }
   }
@@ -418,7 +481,7 @@ read.cow.perl <- function (cowfile, eyes, thoughts, tongue, perl=Sys.which('perl
 #' this tries to read it in and use some EXTREMELY rudimentary regex to parse
 #' the cow:
 #'
-#' 1. Strip the `$the_cow <<"EOC";` and `EOC` lines if they are there
+#' 1. Strip the `$the_cow = <<"EOC";` and `EOC` lines if they are there
 #' 2. Replace `$eyes`, `$tongue` and `$thoughts` with the appropriate values
 #'
 #' Any lines before `$the_cow << EOC` and after the ending `EOC` are ignored.
@@ -427,26 +490,30 @@ read.cow.perl <- function (cowfile, eyes, thoughts, tongue, perl=Sys.which('perl
 #' don't want to be in the situation where you're using this function.
 read.cow.noperl <- function (cowfile, eyes, thoughts, tongue) {
     lines <- readLines(cowfile)
-    thecow <- grep('\\$the_cow *<< *', lines)
+    thecow <- grep('\\$the_cow *= *<< *', lines)
     if (length(thecow)) {
         cowline <- lines[thecow[1]]
         # trim out everything up to & including the '$the_cow << EOC;' line.
         lines <- lines[(thecow[1] + 1):length(lines)]
 
         # trim out everything after & including the final 'EOC' line.
-        m <- regexpr('\\$the_cow *<< *"?([A-Za-z_]+)"? *; *$', cowline, perl=T)
+        m <- regexpr('\\$the_cow *= *<< *"?([A-Za-z_]+)"? *; *$', cowline, perl=T)
         st <- attr(m, 'capture.start')
         if (m != -1) {
             EOC <- substr(cowline, st, st + attr(m, 'capture.length') - 1)
             endline <- grep(paste0('^', EOC, ' *$'), lines)
             if (length(endline)) {
-                lines <- lines[1:endline]
+                lines <- lines[1:(endline-1)]
             }
         }
     }
+    # add newline at end
+    if (!grepl('^\\s*$', lines[length(lines)])) lines=c(lines, '')
     cow <- paste(lines, collapse="\n")
     cow <- gsubv(c('$eyes', '$thoughts', '$tongue'),
                  c(eyes, thoughts, tongue),
                  cow, fixed=T)    
     return(cow)
 }
+
+# TODO: add newline to end of cows.

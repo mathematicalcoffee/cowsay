@@ -7,4 +7,5 @@ gsubv <- function (patterns, replacements, x, ...) {
     for (i in seq_len(n)) {
         x <- gsub(patterns[i], replacements[i], x, ...)
     }
+    return(x)
 }
