@@ -7,6 +7,7 @@ Author: Amy Chan
 Maintainer: Amy Chan <mathematical.coffee@gmail.com>
 Description: This is an R version of the original cowsay program written in Perl by Tony Monroe.
 License: GPL
-Suggests: fortunes
+Suggests: fortunes,
+    testthat
 URL: https//github.com/mathematicalcoffee/cowsay
 BugReports: https://github.com/mathematicalcoffee/cowsay/issues
