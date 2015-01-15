@@ -17,6 +17,7 @@
 #' see `cow.styles` for the list of cow styles.
 #' @export
 #' @family cowsay
+#' @return the cow-string, invisibly.
 #' @examples
 #' randomcowsay('MOOOOO')
 cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=60,
@@ -41,6 +42,9 @@ cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=60,
     
     # convert the cow into a path
     cowpath <- get.cowfile(cow)
+    if (is.null(cowpath)) {
+        stop(sprintf("Could not find the '%s' cowfile!", cow))
+    }
     
     # get the cow.
     cowstring <- get.cow(cowpath, eyes=eyes, tongue=tongue, thoughts=thoughts)
@@ -66,6 +70,9 @@ cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=60,
 #'
 #' If any of the arguments `cow`, `style` or `think` are given, this overrides
 #'  the randomness for that argument.
+#'  
+#' Note that if you supply `eyes` or `tongue`, the style overrides these if it
+#'  has prespecified values for them.
 #'
 #' @family cowsay
 #' @export
@@ -124,15 +131,16 @@ cow.styles <- list(
     stoned=list(eyes='**', tongue='U'),
     tired=list(eyes='--'),
     wired=list(eyes='OO'),
-    youthful=list(eyes='..')
+    young=list(eyes='..')
 )
 
 #' Looks for a particular cow.
 #'
 #' Looks for cows in this order:
 #'
-#' 1. The corresponding R cow (`{cow}.rcow`) in the cowpath in order;
-#' 2. a Perl/plain cow with extension '.cow' (e.g. you downloaded a cow pack
+#' 1. If the input is a filename with extension 'cow' or 'rcow' and exists, we use it;
+#' 2. The corresponding R cow (`{cow}.rcow`) in the cowpath in order;
+#' 3. a Perl/plain cow with extension '.cow' (e.g. you downloaded a cow pack
 #'     and have not ported them to rcows or plaincows yet)
 #'
 #' Note that the `cow` should NOT have the extension
@@ -146,6 +154,10 @@ cow.styles <- list(
 #' get.cowfile('three-eyes')
 #' @export
 get.cowfile <- function (cow) {
+    # 0 check if it's a path that exists and has extension r?cow
+    if (file.exists(cow) && grepl('\\.r?cow$', cow)) {
+        return(cow)
+    }
     # strip extension
     cow <- sub('\\.r?cow$', '', cow)
 
