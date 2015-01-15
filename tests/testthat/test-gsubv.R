@@ -1,7 +1,7 @@
 context("gsubv")
 
 test_that("gsubv returns a character vector of the same length as x", {
-  x = c('one', 'two', 'three', 'four')
+  x <- c('one', 'two', 'three', 'four')
   expect_equal(length(gsubv('foo', 'bar', x[1])), 1)
   expect_equal(length(gsubv('foo', 'bar', x)), length(x))
 })
@@ -26,13 +26,13 @@ test_that("gsubv can handle n patterns and m replacements, recycling the shorter
 })
 
 test_that("when gsubv has multiple patterns/replacements, they are done sequentially", {
-  ps = c('cone', 'one')
-  rs = c('icecream waffle', 'a single')
+  ps <- c('cone', 'one')
+  rs <- c('icecream waffle', 'a single')
   expect_equal(gsubv(ps, rs, 'one cone of cold'), 'a single icecream waffle of cold')
   expect_equal(gsubv(rev(ps), rev(rs), 'one cone of cold'), 'a single ca single of cold')
   
-  rs = c('cat', 'dog')
-  ps = c('ruler of dogs', 'puppy-wuppy')
+  rs <- c('cat', 'dog')
+  ps <- c('ruler of dogs', 'puppy-wuppy')
   expect_equal(gsubv(ps, rs, 'A cat and a dog'), 'A ruler of puppy-wuppys and a puppy-wuppy')
   expect_equal(gsubv(rev(ps), rev(rs), 'A cat and a dog'), 'A ruler of dogs and a puppy-wuppy')
 })
