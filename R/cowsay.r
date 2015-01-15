@@ -1,5 +1,3 @@
-# SCOOPED! https://github.com/sckott/cowsay
-
 #' calls cowsay
 #'
 #' @param message: what to say
@@ -55,7 +53,7 @@ cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=60,
     messagestring <- construct.balloon(message, think=think)
 
     the_cow <- paste(messagestring, cowstring, sep='\n')
-    attr(the_cow, 'cowtype') = attr(cowstring, 'cowtype')
+    attr(the_cow, 'cowtype') <- attr(cowstring, 'cowtype')
     
     message(the_cow)
     return(invisible(the_cow))
@@ -73,10 +71,10 @@ cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=60,
 #' @export
 #' @examples
 #' randomcowsay('MOOOOO')
-randomcowsay = function (message, cow=NULL, style=NULL, think=NULL, ...) {
-    if (is.null(cow)) cow = sample(list.cows(), 1)
-    if (is.null(style)) style = sample(names(cow.styles), 1)
-    if (is.null(think)) think = runif(1) < .5
+randomcowsay <- function (message, cow=NULL, style=NULL, think=NULL, ...) {
+    if (is.null(cow)) cow <- sample(list.cows(), 1)
+    if (is.null(style)) style <- sample(names(cow.styles), 1)
+    if (is.null(think)) think <- runif(1) < .5
     # TODO: random eyes, tongue?
 
     cowsay(message, cow=cow, style=style, think=think, ...)
@@ -149,20 +147,20 @@ cow.styles <- list(
 #' @export
 get.cowfile <- function (cow) {
     # strip extension
-    cow = sub('\\.r?cow$', '', cow)
+    cow <- sub('\\.r?cow$', '', cow)
 
     # get search path
-    paths = get.cowpaths()
+    paths <- get.cowpaths()
 
     # 1. look for an rcow
-    cowfile = file.path(paths, paste0(cow, '.rcow'))
+    cowfile <- file.path(paths, paste0(cow, '.rcow'))
     if (any(file.exists(cowfile))) {
         # return first cow on path that matches
         return(cowfile[file.exists(cowfile)][1])
     }
     
     # 2. look for a Perl cow
-    cowfile = file.path(paths, paste0(cow, '.cow'))
+    cowfile <- file.path(paths, paste0(cow, '.cow'))
     if (any(file.exists(cowfile))) {
         # return first cow on path that matches
         return(cowfile[file.exists(cowfile)][1])
@@ -172,7 +170,7 @@ get.cowfile <- function (cow) {
 }
 
 #' Path to cows if you install from the repositories
-.sys.cowpath = '/usr/share/cowsay/cows'
+.sys.cowpath <- '/usr/share/cowsay/cows'
 
 #' Returns the search path for cows.
 #'
@@ -187,21 +185,21 @@ get.cowfile <- function (cow) {
 #' @return {character vector} directories that cows will be looked for under.
 #' @family cow styles
 #' @export
-get.cowpaths = function() {
+get.cowpaths <- function() {
     # 1. COWPATH
-    paths = Sys.getenv('COWPATH')
+    paths <- Sys.getenv('COWPATH')
     if (paths != "") {
-        paths = strsplit(paths, .Platform$path.sep, fixed=T)[[1]]
+        paths <- strsplit(paths, .Platform$path.sep, fixed=T)[[1]]
     } else {
-        paths = NULL
+        paths <- NULL
     }
 
     # 2. System path
-    paths = c(paths, system.file('cows', package='cowsay'))
+    paths <- c(paths, system.file('cows', package='cowsay'))
 
     # 3. '/usr/share/cowsay/cows' (if exists)
     #if (isTRUE(file.info(.sys.cowpath)$isdir)) {
-    #    paths = c(paths, .sys.cowpath)
+    #    paths <- c(paths, .sys.cowpath)
     #}
 
     return(paths)
@@ -333,10 +331,10 @@ get.cow <- function (cowfile, eyes, thoughts, tongue) {
 #' @inheritParams get.cow
 #' @family cowfile parsing
 #' @return {boolean} whether the cow is a Perl cow or not.
-is.perl.cow = function (cowfile) {
-    isperlcow = file.exists(cowfile)
+is.perl.cow <- function (cowfile) {
+    isperlcow <- file.exists(cowfile)
     if (!isperlcow) return(isperlcow)
-    isperlcow = isperlcow && length(grep('$the_cow', readLines(cowfile), fixed=T))
+    isperlcow <- isperlcow && length(grep('$the_cow', readLines(cowfile), fixed=T))
     return(isperlcow)
 }
 
@@ -379,7 +377,7 @@ read.cow.r <- function (cowfile, eyes, thoughts, tongue) {
         env$gsubv <- gsubv
         # Catch errors, suppress warnings (?)
        suppressWarnings(tryCatch(source(rfile, local=env, verbose=F, echo=F, print.eval=F),
-                        error = function (e) {
+                        error=function (e) {
                             stop(sprintf("in `read.cow.r`:Error reading '%s': %s",
                                          rfile,
                                          e$message),
