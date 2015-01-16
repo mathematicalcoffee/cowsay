@@ -1,7 +1,7 @@
 Package: cowsay
 Type: Package
 Title: An R version of cowsay.
-Version: 1.0
+Version: 1.0.1
 Date: 2015-01-16
 Author: Amy Chan
 Maintainer: Amy Chan <mathematical.coffee@gmail.com>
