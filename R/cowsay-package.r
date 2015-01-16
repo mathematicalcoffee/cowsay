@@ -1,5 +1,4 @@
 #' @name cowsay-package
-#' @aliases cowsay
 #' @author Amy Chan <mathematical.coffee@@gmail.com>
 #' @docType package
 #' @title An R port of cowsay

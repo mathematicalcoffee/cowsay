@@ -44,6 +44,7 @@
 #' # [1] "raining boars and cots and dags"
 #' 
 #' @seealso \code{\link{gsub}}
+#' @export
 gsubv <- function (patterns, replacements, x, ...) {
     n <- max(length(patterns), length(replacements))
     patterns <- rep(patterns, length.out=n)

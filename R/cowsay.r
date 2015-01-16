@@ -1,20 +1,30 @@
 #' calls cowsay
 #'
-#' @param message: what to say
-#' @param cow: path to a cow file to use, or name of a pre-installed cow (see
+#' @param message {string} what to say
+#' @template cow-features
+#' @param cow {string} path to a cow file to use, or name of a pre-installed cow (see
 #'             \code{\link{list.cows}})
-#' @param eyes: characters to use for the eyes
-#'              (only the first two characters are used), e.g. "oo"
-#' @param tongue: characters to use for the tongue
-#'                (at most the first two characters are used), e.g. "U", "\/"
-#' @param wrap: number of characters to wrap the message at (-1 not to wrap)
-#' @param think: is the cow thinking rather than saying?
-#' @param style: a predefined style for the cow (e.g. 'dead' sets the cow's eyes
+#' @param wrap {integer} number of characters to wrap the message at (-1 not to wrap)
+#' @param think {logical} is the cow thinking rather than saying?
+#' @param style {string} a predefined style for the cow (e.g. 'dead' sets the cow's eyes
 #'               to 'XX'). Overrides any eye string passed in.
 #'               By default, no style is applied.
 #'               See details for more styles.
 #'
-#' see `cow.styles` for the list of cow styles.
+#' @details
+#' The available cow styles are:
+#'
+#' \describe{
+#'   \item{borg}{the cow looks like a Borg}
+#'   \item{dead}{the cow is dead (!)}
+#'   \item{default}{the default plain cow}
+#'   \item{greedy}{the cow is greedy}
+#'   \item{paranoid}{the cow is paranoid}
+#'   \item{stoned}{the cow is stoned}
+#'   \item{tired}{the cow is sleepy}
+#'   \item{wired}{the cow has had too much caffeine}
+#'   \item{young}{the cow in its younger days}
+#' }
 #' @export
 #' @family cowsay
 #' @return the cow-string, invisibly.
@@ -75,6 +85,8 @@ cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=60,
 #' Note that if you supply `eyes` or `tongue`, the style overrides these if it
 #'  has prespecified values for them.
 #'
+#' @inheritParams cowsay
+#' @param ... passed to \code{\link{cowsay}}.
 #' @family cowsay
 #' @export
 #' @examples
@@ -94,7 +106,7 @@ randomcowsay <- function (message, cow=NULL, style=NULL, think=NULL, ...) {
 #'
 #' @param path {character vector|NULL} path(s) to list the cows under. If NULL,
 #'              the cowpath is used (see \code{\link{get.cowpaths}}).
-#' @param ...: passed to \code{\link[base]{list.files}}.
+#' @param ...  passed to \code{\link[base]{list.files}}.
 #' @return a character vector of cow files found in the path.
 #' @seealso \code{\link[base]{list.files}}
 #' @export
@@ -228,7 +240,7 @@ get.cowpaths <- function() {
 #' @family speech bubble functions
 #' @seealso \code{\link[base]{strwrap}}
 #' @examples
-#' trim.message('I do not like green eggs and ham.\nI do not like them, Sam I Am!',
+#' cowsay:::trim.message('I do not like green eggs and ham.\nI do not like them, Sam I Am!',
 #'              width=10)
 trim.message <- function (x, width=0.8 * getOption("width")) {
     x <- as.character(x)
@@ -243,9 +255,9 @@ trim.message <- function (x, width=0.8 * getOption("width")) {
 }
 
 #' Puts the message into the balloon
-#' @inheritParams cowsay
 #' @param message {character vector} a character vector with the message to
 #'         put into the bubble (one element per line).
+#' @inheritParams cowsay
 #' @return {string} a single string with the speech bubble in it (embedded newlines)
 #' @family speech bubble functions
 #' @details
@@ -262,9 +274,9 @@ trim.message <- function (x, width=0.8 * getOption("width")) {
 #'
 #' (See the examples).
 #' @examples
-#' cat(construct.balloon('MOOOO', think=T))
-#' cat(construct.balloon('MOOOO', think=F))
-#' cat(construct.balloon(c('MOOOO', 'MOOO!!!'), think=F))
+#' cat(cowsay:::construct.balloon('MOOOO', think=TRUE))
+#' cat(cowsay:::construct.balloon('MOOOO', think=FALSE))
+#' cat(cowsay:::construct.balloon(c('MOOOO', 'MOOO!!!'), think=FALSE))
 construct.balloon <- function (message, think) {   
     mlength <- max(nchar(message))
     format <- paste0("%s %-", mlength, "s %s")
@@ -302,7 +314,8 @@ construct.balloon <- function (message, think) {
 }
 
 #' Reads a cow from a cowfile.
-#' @template cowr
+#' @template cow-features
+#' @template cowfile
 #' @details
 #'
 #' 1. If the file has extension `rcow`, we read it in as an R cow (\code{\link{read.cow.r}}).
@@ -355,7 +368,8 @@ is.perl.cow <- function (cowfile) {
 
 #' Reads an R-cow.
 #'
-#' @template cowr
+#' @template cow-features
+#' @template cowfile
 #' @details
 #' R-cows consist of 1 (optionally 2) files:
 #'
@@ -376,7 +390,7 @@ is.perl.cow <- function (cowfile) {
 #' @examples
 #' # three-eyes cow has .r and .rcow (.r file expands the eyes so it has 3)
 #' cowfile <- system.file('cows', 'three-eyes.rcow', package='cowsay')
-#' cat(read.cow.r(cowfile, eyes="..", thoughts="o", tongue="U"))
+#' cat(cowsay:::read.cow.r(cowfile, eyes="..", thoughts="o", tongue="U"))
 read.cow.r <- function (cowfile, eyes, thoughts, tongue) {
     # search for an R file of the same name
     rfile <- c(sub('\\.r?cow$', '.r', cowfile),
@@ -414,7 +428,8 @@ read.cow.r <- function (cowfile, eyes, thoughts, tongue) {
 #'
 #' Reads a cowfile where we take the cow as-is (comment lines allowed), do
 #'  a straight substitution of eyes/tongue/thoughts tokens.
-#' @template cowr
+#' @template cow-features
+#' @template cowfile
 #' @details
 #' The cow file:
 #'
@@ -426,12 +441,10 @@ read.cow.r <- function (cowfile, eyes, thoughts, tongue) {
 #' @examples
 #' # this cow happens to be a simple one (no further code required)
 #' cowfile <- system.file('cows', 'small.rcow', package='cowsay')
-#' cat(read.cow.plain(cowfile, eyes="..", thoughts="o", tongue="U"))
-#' # TODO
-#'
+#' cat(cowsay:::read.cow.plain(cowfile, eyes="..", thoughts="o", tongue="U"))
 read.cow.plain <- function (cowfile, eyes, thoughts, tongue) {
     lines <- readLines(cowfile)
-    lines <- lines[grep('^#', lines, inv=T)]
+    lines <- lines[grep('^#', lines, invert=T)]
     # add newline at end
     if (!grepl('^\\s*$', lines[length(lines)])) lines=c(lines, '')
     cow <- paste(lines, collapse="\n") 
@@ -446,12 +459,15 @@ read.cow.plain <- function (cowfile, eyes, thoughts, tongue) {
 #' These are cow files from the original cowsay distribution, written in Perl.
 #' We run them through a perl interpreter (if you have one installed); if you
 #' don't have Perl installed we throw an error.
-#' @template cowr
+#' @template cow-features
+#' @template cowfile
+#' @param perl {string}: path to the Perl executable (by default
+#'         `Sys.which('perl')[1]`)
 #' @examples
 #' \dontrun{
 #' # if you have the original cowsay installed on your system...
 #' cowfile <- '/usr/share/cowsay/cows/three-eyes.cow'
-#' cat(read.cow.perl(cowfile, eyes="Oo", thoughts="\\", tongue="U"))
+#' cat(cowsay:::read.cow.perl(cowfile, eyes="Oo", thoughts="\\", tongue="U"))
 #' #         \  ^___^
 #' #          \ (Ooo)\_______
 #' #            (___)\       )\/\
@@ -488,7 +504,8 @@ read.cow.perl <- function (cowfile, eyes, thoughts, tongue, perl=Sys.which('perl
 
 #' Reads a Perl-style cowfile where Perl is not installed (crude substitutions)
 #'
-#' @template cowr
+#' @template cow-features
+#' @template cowfile
 #' @details
 #' If you are trying to read in a Perl-style cowfile but Perl is not installed,
 #' this tries to read it in and use some EXTREMELY rudimentary regex to parse
