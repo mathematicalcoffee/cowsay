@@ -31,8 +31,8 @@ test_that("when gsubv has multiple patterns/replacements, they are done sequenti
   expect_equal(gsubv(ps, rs, 'one cone of cold'), 'a single icecream waffle of cold')
   expect_equal(gsubv(rev(ps), rev(rs), 'one cone of cold'), 'a single ca single of cold')
   
-  rs <- c('cat', 'dog')
-  ps <- c('ruler of dogs', 'puppy-wuppy')
+  ps <- c('cat', 'dog')
+  rs <- c('ruler of dogs', 'puppy-wuppy')
   expect_equal(gsubv(ps, rs, 'A cat and a dog'), 'A ruler of puppy-wuppys and a puppy-wuppy')
   expect_equal(gsubv(rev(ps), rev(rs), 'A cat and a dog'), 'A ruler of dogs and a puppy-wuppy')
 })

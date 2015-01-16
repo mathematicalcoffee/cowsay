@@ -1,11 +1,13 @@
 quiet.cowsay = function (...) {
-  out <- invisible(capture.output(cowsay(...)))
+  out <- suppressMessages(cowsay(...))
   return(out)
 }
 msg.short <- "mooooo"
 msg.long <- "I do not like green eggs and ham. I do not like them, Sam I Am!"
 default.rcowpath <- system.file('cows', 'default.rcow', package='cowsay')
 default.rcow <- paste(readLines(default.rcowpath), collapse="\n")
+
+perl <- Sys.which('perl')[1]
 
 context("cowsay")
 
@@ -16,19 +18,27 @@ test_that("cowsay outputs a message", {
 })
 
 test_that("cowsay returns a string equal to the outputted message", {
-    out <- evaluate_promise(cowsay('moo'))
-    expect_equal(out$result, x$messages)
+  # can't use evaluate_promise unless testthat is new enough: see
+  # https://github.com/hadley/testthat/commit/b51f8473285a981ca2c6cfc72ad7558a9cab6a38
+  # (as of 16 Jan 2015 this fix has not made it to CRAN)
+  messages <- character()
+  mHandler = function (m) {
+    messages <<- c(messages, m$message)
+    invokeRestart("muffleMessage")
+  }
+  o <- withCallingHandlers(cowsay('moo'), message=mHandler)
+  expect_equivalent(messages, o)
 })
 
 test_that("cowsay's message is in the output", {
   # short msg
-  expect_match(cowsay(msg.short), msg.short, fixed=T)
+  expect_match(quiet.cowsay(msg.short), msg.short, fixed=T)
   
   # long msg
-  expect_match(cowsay(msg.long, wrap=-1), msg.long, fixed=T)
+  expect_match(quiet.cowsay(msg.long, wrap=-1), msg.long, fixed=T)
 })
 test_that("cowsay's message is wrapped in a speech bubble", {
-  expect_match(cowsay(msg.long, think=F, wrap=-1), construct.balloon(msg.long, think=F), fixed=T)  
+  expect_match(quiet.cowsay(msg.long, think=F, wrap=-1), construct.balloon(msg.long, think=F), fixed=T)  
 })
 # these are not the most comprehensive of tests...
 test_that("cowsay's `cow` argument is respected", {
@@ -36,24 +46,24 @@ test_that("cowsay's `cow` argument is respected", {
 })
 
 test_that("cowsay's `eyes`, `tongue` and `think` arguments work", {
-  expect_match(cowsay(msg.short, cow=default.rcowpath, eyes='EY', tongue='TT', think=T),
+  expect_match(quiet.cowsay(msg.short, cow=default.rcowpath, eyes='EY', tongue='TT', think=T),
                gsubv(c('$thoughts', '$eyes', '$tongue'), c('o', 'EY', 'TT'), default.rcow, fixed=T),
                fixed=T)
   # eyes: first two characters used (padded to 2).
   # tongue: first two used (padded to 2)
-  expect_match(cowsay(msg.short, cow=default.rcowpath, eyes='@.*', tongue='TONGUE', think=F),
+  expect_match(quiet.cowsay(msg.short, cow=default.rcowpath, eyes='@.*', tongue='TONGUE', think=F),
                gsubv(c('$thoughts', '$eyes', '$tongue'), c('\\', '@.', 'TO'), default.rcow, fixed=T),
                fixed=T)
-  expect_match(cowsay(msg.short, cow=default.rcowpath, eyes='@', tongue='T', think=F),
+  expect_match(quiet.cowsay(msg.short, cow=default.rcowpath, eyes='@', tongue='T', think=F),
                gsubv(c('$thoughts', '$eyes', '$tongue'), c('\\', '@ ', 'T '), default.rcow, fixed=T),
                fixed=T)  
 })
 test_that("cowsay's `wrap` argument is respected", {
   # wrap -1: don't wrap
-  expect_match(cowsay(msg.long, wrap=-1), msg.long, fixed=T)  
+  expect_match(quiet.cowsay(msg.long, wrap=-1), msg.long, fixed=T)  
   # test wrapping
   wr <- round(nchar(msg.long)/2)
-  expect_match(cowsay(msg.long, wrap=wr, think=F), construct.balloon(trim.message(msg.long, width=wr), think=F), fixed=T)  
+  expect_match(quiet.cowsay(msg.long, wrap=wr, think=F), construct.balloon(trim.message(msg.long, width=wr), think=F), fixed=T)  
 })
 test_that("cowsay's `style` argument is respected", {
   default.eyes <- 'oo'
@@ -63,14 +73,14 @@ test_that("cowsay's `style` argument is respected", {
     eyes <- ifelse(is.null(st$eyes), default.eyes, st$eyes)
     tongue <- ifelse(is.null(st$tongue), default.tongue, st$tongue)
     
-    expect_match(cowsay(msg.short, style=stylename),
-                 cowsay(msg.short, eyes=eyes, tongue=tongue),
+    expect_match(quiet.cowsay(msg.short, style=stylename),
+                 quiet.cowsay(msg.short, eyes=eyes, tongue=tongue),
                  fixed=T)
   }
 })
 test_that("cowsay's `style` argument overrides supplied `eyes` and `tongue`", {
   # 'stoned' has eyes ** and tongue U
-  expect_match(cowsay(msg.short, cow=default.rcowpath, style='stoned', eyes='Oo', tongue='  ', think=T),
+  expect_match(quiet.cowsay(msg.short, cow=default.rcowpath, style='stoned', eyes='Oo', tongue='  ', think=T),
                gsubv(c('$thoughts', '$eyes', '$tongue'), c('o', '**', 'U '), default.rcow, fixed=T),
                fixed=T)
 })
@@ -79,32 +89,36 @@ test_that("cowsay gracefully handles a non-existent cow", {
 })
 
 context("randomcowsay")
+quiet.randomcowsay = function (...) {
+  out <- suppressMessages(randomcowsay(...))
+  return(out)
+}
 test_that("randomcowsay randomizes the cow, style and think", {
   # this is not really a proper test, but run randomcowsay() 10 times with the same message and
   #  you shouldn't get the same output every single time
   # There are 47 cows, 9 cowstyles and 2 think values giving 846 possibilities so the probability
   #  of getting the same "random" cow 10 times in a row is very small (~5e-30)
-  cows <- vapply(1:10, function (i) randomcowsay(msg.short), 'template')
+  cows <- vapply(1:10, function (i) quiet.randomcowsay(msg.short), 'template')
   expect_more_than(length(unique(cows)), 1)
   
   # Try test that `cow` is the only thing randomized if `style` and `think` are fixed.
   # not a comprehensive test, but we check that:
   # * `cow` is actually randomized (more than one unique output produced)
   # * cow is the only thing randomized (check that it's in one of the possible cows with that style/think)
-  cows <- vapply(1:10, function (i) randomcowsay(msg.short, style='paranoid', think=T), 'template')
-  possible.cows <- vapply(list.cows(), randomcowsay, message=msg.short, style='paranoid', think=T, 'template')
+  cows <- vapply(1:10, function (i) quiet.randomcowsay(msg.short, style='paranoid', think=T), 'template')
+  possible.cows <- vapply(list.cows(), quiet.randomcowsay, message=msg.short, style='paranoid', think=T, 'template')
   expect_more_than(length(unique(cows)), 1)
   expect_that(all(cows %in% possible.cows), is_true())
   
   # same for holding `style` fixed and varying the others
-  cows <- vapply(1:10, function (i) randomcowsay(msg.short, cow='default', think=T), 'template')
-  possible.cows <- vapply(names(cow.styles), randomcowsay, message=msg.short, cow='default', think=T, 'template')
+  cows <- vapply(1:10, function (i) quiet.randomcowsay(msg.short, cow='default', think=T), 'template')
+  possible.cows <- vapply(names(cow.styles), quiet.randomcowsay, message=msg.short, cow='default', think=T, 'template')
   expect_more_than(length(unique(cows)), 1)
   expect_that(all(cows %in% possible.cows), is_true())
   
   # same for holding `think` fixed and varying the others (more tests required since 50% chance per test to randomly get it right)
-  cows <- vapply(1:20, function (i) randomcowsay(msg.short, cow='default', style='dead'), 'template')
-  possible.cows <- vapply(c(T, F), randomcowsay, message=msg.short, cow='default', style='dead', 'template')
+  cows <- vapply(1:20, function (i) quiet.randomcowsay(msg.short, cow='default', style='dead'), 'template')
+  possible.cows <- vapply(c(T, F), quiet.randomcowsay, message=msg.short, cow='default', style='dead', 'template')
   expect_more_than(length(unique(cows)), 1)
   expect_that(all(cows %in% possible.cows), is_true())
 })
@@ -113,10 +127,11 @@ test_that("other arguments passed to `randomcowsay` override (note: `style` over
   # all styles have eyes set, and all bar `stoned` do not set the tongue.
   # so eyes is *always* overidden, and tongue is only overidden if the style picked is `stoned`
   # we use the default cow because not all cows have tongues
-  expect_match(randomcowsay(msg.short, cow='default', tongue='V '), 'V ', fixed=T)
+  # blah, also style 'stoned' replaces the tongue!
+  expect_match(quiet.randomcowsay(msg.short, cow='default', style='greedy', tongue='V '), 'V ', fixed=T)
   
   # override 'wrap'
-  expect_match(randomcowsay(msg.long, wrap=10, think=F), construct.balloon(trim.message(msg.long, width=10), think=F),
+  expect_match(quiet.randomcowsay(msg.long, wrap=10, think=F), construct.balloon(trim.message(msg.long, width=10), think=F),
                fixed=T)
   # other args are already tested in randomcowsay (think, cow, style)
 })
@@ -190,7 +205,7 @@ test_that('get.cowpaths has the $COWPATH paths before the package path', {
   oldenv <- Sys.getenv('COWPATH')
   paths <- c('foo/bar', '/baz/bat/bang')
   Sys.setenv(COWPATH=paste(paths, collapse=.Platform$path.sep))
-  expect_equals(get.cowpaths(),
+  expect_equal(get.cowpaths(),
                 c(paths, system.file('cows', package='cowsay')))
   Sys.setenv(COWPATH=oldenv)  
 })
@@ -248,60 +263,83 @@ test_that("construct.balloon speech bubbles have '_' as the top boundary, '-' as
   expect_match(msg[5], paste0(' ', paste(rep('-', n + 2), collapse='')), fixed=T) # '+ 2' because space padding. First space for the side-of-bubble  
 })
 
-# -------- UPTO
+context("get.cow")
+fr <- tempfile(fileext=".rcow")
+frr <- sub('\\.rcow$', '.r', fr)
+fperl <- tempfile(fileext=".cow")
+fplain <- tempfile(fileext=".cow")
 
-#' Reads a cow from a cowfile.
-#' @template cowr
-#' @details
-#'
-#' 1. If the file has extension `rcow`, we read it in as an R cow (\code{\link{read.cow.r}}).
-#' 2. Otherwise, if the file assigns to `$the_cow` at some point, we assume it
-#'      is a Perl cow and read it in with \code{\link{read.cow.perl}} or
-#'      \code{\link{read.cow.noperl}} depending if you have Perl installed or not.
-#' 3. Otherwise we just read it in as a plain cow (\code{\link{read.cow.plain}}).
-#'
-get.cow <- function (cowfile, eyes, thoughts, tongue) {
-    cow <- NULL
-    # 1. If it's an Rcow, read it in as such.
-    if (grepl('\\.rcow$', cowfile)) {
-        # 1. try R
-        cow <- read.cow.r(cowfile, eyes=eyes, thoughts=thoughts, tongue=tongue)
-        attr(cow, 'cowtype') <- 'R'
+cat(default.rcow, "", sep="\n", file=fr)
+cat("eyes <- tolower(eyes)\n", file=frr)
+cat("$the_cow = <<EOC;", "moocow $eyes", "EOC\n", sep='\n', file=fperl)
+cat("$eyes $tongue $thoughts\n", file=fplain)
 
-    # 2. If it's a Perl cow, read it in as such
-    } else if (is.perl.cow(cowfile)) {
-        PERL <- Sys.which('perl')
-        if (PERL != '') {
-            cow <- read.cow.perl(cowfile, eyes=eyes, thoughts=thoughts, tongue=tongue)
-            attr(cow, 'cowtype') <- 'perl'
-        } else {
-            cow <- read.cow.noperl(cowfile, eyes=eyes, thoughts=thoughts, tongue=tongue)
-            attr(cow, 'cowtype') <- 'noperl'
-        }
+cow.r <- get.cow(fr, eyes='OO', tongue='u', thoughts='\\')
+cow.perl <- get.cow(fperl, eyes='OO', tongue='u', thoughts='\\')
+cow.plain <- get.cow(fplain, eyes='OO', tongue='u', thoughts='\\')
 
-    # 3. Otherwise, it's a plain cow.
-    } else {
-        cow <- read.cow.plain(cowfile, eyes=eyes, thoughts=thoughts, tongue=tongue)
-        attr(cow, 'cowtype') <- 'plain'
-    }
+test_that("get.cow returns a single string with attribute 'cowtype' being the type of cow", {
+  expect_is(cow.r, 'character')
+  expect_equal(length(cow.r), 1)
+  expect_equal(attr(cow.r, 'cowtype'), 'R')
+  
+  expect_is(cow.perl, 'character')
+  expect_equal(length(cow.perl), 1)
+  expect_equivalent(attr(cow.perl, 'cowtype'), ifelse(perl == "", "noperl", "perl"))
+  
+  expect_is(cow.plain, 'character')
+  expect_equal(length(cow.plain), 1)
+  expect_equal(attr(cow.plain, 'cowtype'), 'plain')
+})
+test_that("get.cow reads it as an R cow if it has extension .rcow", {
+  # equivalent disregards attributes
+  expect_equivalent(cow.r, read.cow.r(fr, eyes='OO', tongue='u', thoughts='\\'))
+})
+test_that("get.cow reads it as a Perl cow if it is a Perl cow, using Perl if you've got it and read.cow.noperl otherwise", {
+  expect_equivalent(cow.perl, ifelse(perl == "", read.cow.noperl(fperl, eyes='OO', tongue='u', thoughts='\\'), read.cow.perl(fperl, eyes='OO', tongue='u', thoughts='\\')))
+})
+test_that("get.cow reads it as a plain cow otherwise", {
+  expect_equivalent(cow.plain, read.cow.plain(fplain, eyes='OO', tongue='u', thoughts='\\'))  
+})
+test_that("get.cow throws the appropriate errors if they are encountered", {
+  # perl
+  if (perl == "") {
+    skip("cannot test whether Perl errors throw errors; no Perl installed")
+  } else {
+    cat('foobarbaz', '$the_cow=LKSJDF', sep='\n', file=fperl, append=F)
+    expect_error(get.cow(fperl, eyes='OO', tongue='u', thoughts='\\'), "error in the cowfile")    
+  }
+  
+  # r
+  cat('foobar\n', file=frr, append=T)
+  expect_error(get.cow(fr, eyes='OO', tongue='u', thoughts='\\'), "object 'foobar' not found")
+})
 
-    return(cow)
-}
+unlink(frr)
+unlink(fr)
+unlink(fperl)
+unlink(fplain)
 
-#' Is a cow a Perl-cow?
-#' A cow is a perl cow if `$the_cow` can be found in the file (rudimentary check).
-#' @inheritParams get.cow
-#' @family cowfile parsing
-#' @return {boolean} whether the cow is a Perl cow or not.
-is.perl.cow <- function (cowfile) {
-    isperlcow <- file.exists(cowfile)
-    if (!isperlcow) return(isperlcow)
-    isperlcow <- isperlcow && length(grep('$the_cow', readLines(cowfile), fixed=T))
-    return(isperlcow)
-}
+context("is.perl.cow")
+test_that("is.perl.cow returns FALSE if the cowfile doesn't exist", {
+  f <- tempfile()
+  unlink(f)
+  expect_false(is.perl.cow(f))
+})
+test_that("is.perl.cow returns FALSE if the cowfile doesn't have extension .cow", {
+  f <- tempfile()
+  unlink(f)
+  expect_false(is.perl.cow(f))
+})
+test_that("is.perl.cow returns TRUE when the string '$the_cow' is in the file (and the cowfile exists and has extension .cow)", {
+  f <- tempfile(fileext=".cow")
+  expect_false(is.perl.cow(f)) # right extension, exists, no $the_cow
+  cat('$the_cow\n', file=f)
+  expect_true(is.perl.cow(f))
+  unlink(f)
+})
 
 context("read.cow.r")
-
 test_that("read.cow.r treats the .rcow file as a plain cow", {
   f <- tempfile(fileext='.rcow')
   cow <- 'MYCOW HAS EYES: $eyes\n and thoughts: $thoughts and tongue: $tongue\n'
@@ -350,11 +388,11 @@ test_that("read.cow.plain reads a cow as-is and simply substitutes the $eyes, $t
   cow <- 'MYCOW HAS EYES: $eyes\n and thoughts: $thoughts and tongue: $tongue\n'
   cat(cow, file=f)
   
-  expect_equals(read.cow.plain(f), eyes='XO', thoughts='[]', tongue='U ',
-                gsubv(c('$eyes', '$thoughts', '$tongue'),
-                      c('XO', '[]', 'U'),
-                      cow,
-                      fixed=T))
+  expect_equal(read.cow.plain(f, eyes='XO', thoughts='[]', tongue='U '),
+               gsubv(c('$eyes', '$thoughts', '$tongue'),
+                     c('XO', '[]', 'U '),
+                     cow,
+                     fixed=T))
   unlink(f)
 })
 test_that("read.cow.plain ignores comments being lines starting with #", {
@@ -363,101 +401,85 @@ test_that("read.cow.plain ignores comments being lines starting with #", {
   cmt <- '#here\'s a comment.'
   cat(paste(cmt, cow, sep='\n'), file=f)
   
-  expect_equals(read.cow.plain(f), eyes='XO', thoughts='[]', tongue='U ',
-                gsubv(c('$eyes', '$thoughts', '$tongue'),
-                      c('XO', '[]', 'U'),
-                      cow,
-                      fixed=T))
+  expect_equal(read.cow.plain(f, eyes='XO', thoughts='[]', tongue='U '),
+              gsubv(c('$eyes', '$thoughts', '$tongue'),
+                    c('XO', '[]', 'U '),
+                    cow,
+                    fixed=T))
   unlink(f)  
 })
 
-# UPTO NOTDONE
 
-#' Read a cowfile (original Perl format)
-#'
-#' These are cow files from the original cowsay distribution, written in Perl.
-#' We run them through a perl interpreter (if you have one installed); if you
-#' don't have Perl installed we throw an error.
-#' @template cowr
-#' @example
-#' \dontrun{
-#' # if you have the original cowsay installed on your system...
-#' cowfile <- '/usr/share/cowsay/cows/three-eyes.cow'
-#' cat(read.cow.perl(cowfile, eyes="Oo", thoughts="\\", tongue="U"))
-#' #         \  ^___^
-#' #          \ (Ooo)\_______
-#' #            (___)\       )\/\
-#' #             U  ||----w |
-#' #                 ||     ||
-#' }
-# To get around escaping problems:
-# http://stackoverflow.com/questions/16632223/executing-perl-from-r-perlquote-shquote
-read.cow.perl <- function (cowfile, eyes, thoughts, tongue, perl=Sys.which('perl')) {
-    res <- NULL
-    if (perl == '') {
-        stop("You must have Perl installed and on your $PATH in order to read a Perl cowfile. Consider trying `read.cow.noperl`.")
-    } else {
-        # apparently system2 is better than system.
-        res <- system2(perl,
-                c('-e',
-                  shQuote(sprintf('our ($thoughts, $eyes, $tongue) = @ARGV; do %s; print $the_cow', shQuote(cowfile))),
-                  shQuote(thoughts),
-                  shQuote(eyes),
-                  shQuote(tongue)),
-                stderr=F,
-                stdout=T)        
-        if (length(res) == 0) {
-            warning("The resulting cow was empty; error in the cowfile?")
-        } else {
-            # add newline at end
-            if (!grepl('^\\s*$', res[length(res)])) res=c(res, '')
-            res <- paste(res, collapse="\n")
-        }
-  }
-  return(res)
+# note: these tests are not "proper", you need perl really
+context("read.cow.perl")
+
+test_that("if Perl cnanot be found, read.cow.perl throws an error", {
+  expect_error(read.cow.perl(get.cowfile('default'), eyes='oo', thoughts='o', tongue='U', perl=''), 'You must have Perl installed')
+})
+
+# no perl
+if (perl == '') {
+  skip("cannot do remaining read.cow.perl tests, no Perl installed")  
+} else {
+  f <- tempfile(fileext='.cow')
+  # 'chop' returns the last character of $eyes
+  cat('## A cow', '$extra = chop($eyes);', '$eyes .= ($extra x 2);', '$the_cow = "$eyes|$thoughts|$tongue"', file=f, sep='\n')
+  o <- read.cow.perl(f, eyes='@#', thoughts='&', tongue='U ')
+  
+  test_that("read.cow.perl produces a single string as output", {
+    expect_is(o, 'character')
+    expect_equal(length(o), 1)
+  })
+  test_that("read.cow.perl runs the cowfile through perl, passing the eyes/thoughts/tongue correctly", {
+    # adds a newline at the end    
+    expect_equal(o, "@##|&|U \n")
+  })
+  test_that("read.cow.perl escapes appropriately", {
+    expect_equal(read.cow.perl(f, eyes='"\'', thoughts='$PATH', tongue='\"'),
+                 '"\'\'|$PATH|"\n')    
+  })
+  unlink(f)
 }
 
-#' Reads a Perl-style cowfile where Perl is not installed (crude substitutions)
-#'
-#' @template cowr
-#' @details
-#' If you are trying to read in a Perl-style cowfile but Perl is not installed,
-#' this tries to read it in and use some EXTREMELY rudimentary regex to parse
-#' the cow:
-#'
-#' 1. Strip the `$the_cow = <<"EOC";` and `EOC` lines if they are there
-#' 2. Replace `$eyes`, `$tongue` and `$thoughts` with the appropriate values
-#'
-#' Any lines before `$the_cow << EOC` and after the ending `EOC` are ignored.
-#'
-#' Everything else (including any other code) is read verbatim! So you really
-#' don't want to be in the situation where you're using this function.
-read.cow.noperl <- function (cowfile, eyes, thoughts, tongue) {
-    lines <- readLines(cowfile)
-    thecow <- grep('\\$the_cow *= *<< *', lines)
-    if (length(thecow)) {
-        cowline <- lines[thecow[1]]
-        # trim out everything up to & including the '$the_cow << EOC;' line.
-        lines <- lines[(thecow[1] + 1):length(lines)]
+# crude substitutions of perl code
+context("read.cow.noperl")
 
-        # trim out everything after & including the final 'EOC' line.
-        m <- regexpr('\\$the_cow *= *<< *"?([A-Za-z_]+)"? *; *$', cowline, perl=T)
-        st <- attr(m, 'capture.start')
-        if (m != -1) {
-            EOC <- substr(cowline, st, st + attr(m, 'capture.length') - 1)
-            endline <- grep(paste0('^', EOC, ' *$'), lines)
-            if (length(endline)) {
-                lines <- lines[1:(endline-1)]
-            }
-        }
-    }
-    # add newline at end
-    if (!grepl('^\\s*$', lines[length(lines)])) lines=c(lines, '')
-    cow <- paste(lines, collapse="\n")
-    cow <- gsubv(c('$eyes', '$thoughts', '$tongue'),
-                 c(eyes, thoughts, tongue),
-                 cow, fixed=T)    
-    return(cow)
-}
-
-# TODO: add newline to end of cows.
+f <- tempfile(fileext=".cow")
+cat("this line should be ignored", "$the_cow=<<EOC;", "cow is: $eyes, $thoughts, $tongue", "second line $tongue", "EOC", "this line should also be ignored", sep='\n', file=f)
+o <- read.cow.noperl(f, eyes='"\'', thoughts="$t", tongue="U")
+o.l <- strsplit(o, '\n')[[1]]
+test_that("read.cow.noperl returns a single string with a newline on the end", {
+  expect_is(o, 'character')
+  expect_equal(length(o), 1)
+  expect_equal(substr(o, nchar(o), nchar(o)), '\n')
+})
+test_that("read.cow.noperl ignores lines before <<EOC and after EOC", {
+  expect_false(grepl('ignored', o, fixed=T))
+  expect_equal(length(o.l), 2) # 2-line cow
+})
+test_that("read.cow.noperl returns the lines between $the_cow = <<EOC and the last EOC", {
+  expect_match(o.l[1], "cow is:", fixed=T)
+  expect_match(o.l[2], "second line ", fixed=T)
+})
+test_that("read.cow.noperl substitutes $eyes, $thoughts and $tongue", {
+  expect_equal(o.l[1], "cow is: \"', $t, U")
+  expect_equal(o.l[2], "second line U")
+})
+test_that("read.cow.noperl returns all the lines if $the_cow = <<EOC is not there", {
+  cat("here is my test cow", "here is the second line", sep="\n", file=f, append=F)
+  expect_equal(read.cow.noperl(f, eyes="oo", thoughts="o", tongue="U"), "here is my test cow\nhere is the second line\n")  
+})
+test_that("read.cow.noperl handles multiple HEREDOC syntax: surrounded by quotes, different token, spacing", {
+  # spacing (though techinically there should be no space between << and EOC, and now you are supposed to quote the EOC too)
+  cat("$the_cow      =  << EOC   ;  ", "mycow", "EOC  ", file=f, sep='\n', append=F)
+  expect_equal(read.cow.noperl(f, eyes="oo", thoughts="\\", tongue="U"), "mycow\n", info="whitespace surrounding marker")
+  
+  # different token
+  cat("$the_cow = <<MYMARKER;", "EOC", "MYMARKER", file=f, sep='\n', append=F)
+  expect_equal(read.cow.noperl(f, eyes="oo", thoughts="\\", tongue="U"), "EOC\n", info="different marker name")
+  
+  # quotes around marker
+  cat("$the_cow = <<\"FOOBAR\";", "thecow", "FOOBAR", file=f, sep='\n', append=F)
+  expect_equal(read.cow.noperl(f, eyes="oo", thoughts="\\", tongue="U"), "thecow\n", info="quotes around marker")
+})
+unlink(f)

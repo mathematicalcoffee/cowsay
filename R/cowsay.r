@@ -19,7 +19,8 @@
 #' @family cowsay
 #' @return the cow-string, invisibly.
 #' @examples
-#' randomcowsay('MOOOOO')
+#' cowsay('mooooo')
+#' cowsay('moooo', eyes='Oo')
 cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=60,
                     think=F,
                     style=c('borg', 'dead', 'default', 'greedy', 'paranoid', 'stoned', 'tired', 'wired', 'young')) {
@@ -59,7 +60,7 @@ cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=60,
     the_cow <- paste(messagestring, cowstring, sep='\n')
     attr(the_cow, 'cowtype') <- attr(cowstring, 'cowtype')
     
-    message(the_cow)
+    message(the_cow, appendLF=FALSE)
     return(invisible(the_cow))
 }
 
@@ -320,7 +321,7 @@ get.cow <- function (cowfile, eyes, thoughts, tongue) {
 
     # 2. If it's a Perl cow, read it in as such
     } else if (is.perl.cow(cowfile)) {
-        PERL <- Sys.which('perl')
+        PERL <- Sys.which('perl')[1]
         if (PERL != '') {
             cow <- read.cow.perl(cowfile, eyes=eyes, thoughts=thoughts, tongue=tongue)
             attr(cow, 'cowtype') <- 'perl'
@@ -339,12 +340,14 @@ get.cow <- function (cowfile, eyes, thoughts, tongue) {
 }
 
 #' Is a cow a Perl-cow?
-#' A cow is a perl cow if `$the_cow` can be found in the file (rudimentary check).
+#' A cow is a perl cow if `$the_cow` can be found in the file (rudimentary check!) and the extension is '.cow'.
 #' @inheritParams get.cow
 #' @family cowfile parsing
 #' @return {boolean} whether the cow is a Perl cow or not.
 is.perl.cow <- function (cowfile) {
     isperlcow <- file.exists(cowfile)
+    if (!isperlcow) return(isperlcow)
+    isperlcow <- grepl('\\.cow$', cowfile, ignore.case=T)
     if (!isperlcow) return(isperlcow)
     isperlcow <- isperlcow && length(grep('$the_cow', readLines(cowfile), fixed=T))
     return(isperlcow)
@@ -370,11 +373,10 @@ is.perl.cow <- function (cowfile) {
 #'
 #' This way, the plain cow part can be entirely unescaped, and the R script can
 #'  include the R.
-#' @example
-#' three-eyes cow has .r and .rcow (.r file expands the eyes so it has 3)
+#' @examples
+#' # three-eyes cow has .r and .rcow (.r file expands the eyes so it has 3)
 #' cowfile <- system.file('cows', 'three-eyes.rcow', package='cowsay')
 #' cat(read.cow.r(cowfile, eyes="..", thoughts="o", tongue="U"))
-#' TODO test
 read.cow.r <- function (cowfile, eyes, thoughts, tongue) {
     # search for an R file of the same name
     rfile <- c(sub('\\.r?cow$', '.r', cowfile),
@@ -421,7 +423,7 @@ read.cow.r <- function (cowfile, eyes, thoughts, tongue) {
 #' * can use the placeholders '$eyes', '$tongue', '$thoughts'; these are replaced
 #' * every non-comment line is just the ASCII cow as-is (i.e. no `the_cow = `
 #'     required).
-#' @example
+#' @examples
 #' # this cow happens to be a simple one (no further code required)
 #' cowfile <- system.file('cows', 'small.rcow', package='cowsay')
 #' cat(read.cow.plain(cowfile, eyes="..", thoughts="o", tongue="U"))
@@ -445,7 +447,7 @@ read.cow.plain <- function (cowfile, eyes, thoughts, tongue) {
 #' We run them through a perl interpreter (if you have one installed); if you
 #' don't have Perl installed we throw an error.
 #' @template cowr
-#' @example
+#' @examples
 #' \dontrun{
 #' # if you have the original cowsay installed on your system...
 #' cowfile <- '/usr/share/cowsay/cows/three-eyes.cow'
@@ -458,7 +460,8 @@ read.cow.plain <- function (cowfile, eyes, thoughts, tongue) {
 #' }
 # To get around escaping problems:
 # http://stackoverflow.com/questions/16632223/executing-perl-from-r-perlquote-shquote
-read.cow.perl <- function (cowfile, eyes, thoughts, tongue, perl=Sys.which('perl')) {
+# TODO: mistake in perl file?
+read.cow.perl <- function (cowfile, eyes, thoughts, tongue, perl=Sys.which('perl')[1]) {
     res <- NULL
     if (perl == '') {
         stop("You must have Perl installed and on your $PATH in order to read a Perl cowfile. Consider trying `read.cow.noperl`.")
@@ -473,7 +476,7 @@ read.cow.perl <- function (cowfile, eyes, thoughts, tongue, perl=Sys.which('perl
                 stderr=F,
                 stdout=T)        
         if (length(res) == 0) {
-            warning("The resulting cow was empty; error in the cowfile?")
+            stop(sprintf("The resulting cow was empty; error in the cowfile '%s'?", cowfile))
         } else {
             # add newline at end
             if (!grepl('^\\s*$', res[length(res)])) res=c(res, '')
@@ -525,5 +528,3 @@ read.cow.noperl <- function (cowfile, eyes, thoughts, tongue) {
                  cow, fixed=T)    
     return(cow)
 }
-
-# TODO: add newline to end of cows.
