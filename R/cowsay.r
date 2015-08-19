@@ -5,6 +5,10 @@
 #' @param cow {string} path to a cow file to use, or name of a pre-installed cow (see
 #'             \code{\link{list.cows}})
 #' @param wrap {integer} number of characters to wrap the message at (-1 not to wrap)
+#'             Note that if not explicity specified, this will set `wrap=FALSE`
+#'             if the input `message` has a specific `print` method (so that, for
+#'             example, `cowsay`-ing the results of a t-test will not wrap and
+#'             mess up the output).
 #' @param think {logical} is the cow thinking rather than saying?
 #' @param style {string} a predefined style for the cow (e.g. 'dead' sets the cow's eyes
 #'               to 'XX'). Overrides any eye string passed in.
@@ -31,6 +35,19 @@
 #' @examples
 #' cowsay('mooooo')
 #' cowsay('moooo', eyes='Oo')
+#' 
+#' # let's cowsay some more interesting things.
+#' Note this doesn't wrap even though the length exceeds the default (60 characters);
+#'  this is done automagically to avoid messed up output.
+#' cowsay(head(mtcars))
+#' # if `wrap` is explicity provided, we can override that.
+#' cowsay(head(mtcars), wrap=60)
+#'
+#' \dontrun{
+#' # every .Rprofile should have this..
+#' library(fortunes)
+#' cowsay(fortune())
+#' }
 cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=60,
                     think=F,
                     style=c('borg', 'dead', 'default', 'greedy', 'paranoid', 'stoned', 'tired', 'wired', 'young')) {
@@ -63,6 +80,11 @@ cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=60,
     # get the speech bubble
     # we assume that if there are multiple elements of `message` they are each
     # on their own line.
+    message <- get.text(message, store.print.method=TRUE)
+    if (!is.null(attr(message, 'print.method'))) {
+        if (missing(wrap)) wrap <- 0
+        attr(message, 'print.method') <- NULL
+    }
     if (wrap > 0)
         message <- trim.message(message, width=wrap)
     messagestring <- construct.balloon(message, think=think)
@@ -237,7 +259,7 @@ get.cowpaths <- function() {
 #'   width `width`.
 #'   If there were embedded newlines in `x`, the input is also split up according
 #'   to this.
-#' @family speech bubble functions
+#' @family utility functions
 #' @seealso \code{\link[base]{strwrap}}
 #' @examples
 #' cowsay:::trim.message('I do not like green eggs and ham.\nI do not like them, Sam I Am!',
