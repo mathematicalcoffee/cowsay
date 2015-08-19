@@ -1,10 +1,12 @@
 #' calls cowsay
 #'
-#' @param message {string} what to say
+#' @param message {string} what to say. If it's encoded, ensure you set the encoding!
 #' @template cow-features
 #' @param cow {string} path to a cow file to use, or name of a pre-installed cow (see
 #'             \code{\link{list.cows}})
 #' @param wrap {integer} number of characters to wrap the message at (-1 not to wrap)
+#'            Note that R's `strwrap` (which we use) destroys whitespace, so if you
+#'             are saying ASCII-art or aligned text, use `wrap=F`.
 #' @param think {logical} is the cow thinking rather than saying?
 #' @param style {string} a predefined style for the cow (e.g. 'dead' sets the cow's eyes
 #'               to 'XX'). Overrides any eye string passed in.
@@ -31,6 +33,17 @@
 #' @examples
 #' cowsay('mooooo')
 #' cowsay('moooo', eyes='Oo')
+#'
+#' # Example with encoded strings (c-cedilla)
+#' x <- "fa\xE7ile"
+#' # cowsay(x) # will give a warning about invalid locale
+#' Encoding(x) <- 'latin1'
+#' cowsay(x)
+#'
+#' # Don't wrap, or the spacing in the summary is killed
+#' m <- lm(Sepal.Length ~ Species, iris)
+#' cowsay(capture.output(summary(m)), wrap=F)
+#'
 cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=60,
                     think=F,
                     style=c('borg', 'dead', 'default', 'greedy', 'paranoid', 'stoned', 'tired', 'wired', 'young')) {
@@ -63,6 +76,7 @@ cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=60,
     # get the speech bubble
     # we assume that if there are multiple elements of `message` they are each
     # on their own line.
+    message <- replace.tabs(message, indent=2) # indent for the LHS of speechbubble
     if (wrap > 0)
         message <- trim.message(message, width=wrap)
     messagestring <- construct.balloon(message, think=think)
@@ -232,7 +246,7 @@ get.cowpaths <- function() {
 
 #' Trims a message to a particular width.
 #'
-#' @inheritParams base::strwrap
+#' @inheritParams strwrap.preserve.space
 #' @return {character vector} a vector of `x` chunked up into lines of approximately
 #'   width `width`.
 #'   If there were embedded newlines in `x`, the input is also split up according
@@ -251,7 +265,7 @@ trim.message <- function (x, width=0.8 * getOption("width")) {
     if (length(x) == 1)
         x <- strsplit(x, '\n')[[1]]
     
-    return(strwrap(x, width=width))
+    return(strwrap.preserve.space(x, width=width))
 }
 
 #' Puts the message into the balloon
@@ -278,7 +292,7 @@ trim.message <- function (x, width=0.8 * getOption("width")) {
 #' cat(cowsay:::construct.balloon('MOOOO', think=FALSE))
 #' cat(cowsay:::construct.balloon(c('MOOOO', 'MOOO!!!'), think=FALSE))
 construct.balloon <- function (message, think) {   
-    mlength <- max(nchar(message))
+    mlength <- max(nchar(message, type='w'))
     format <- paste0("%s %-", mlength, "s %s")
     # determine the border elements.
     # if it's a thought bubble the sides of the bubble are ( and )
