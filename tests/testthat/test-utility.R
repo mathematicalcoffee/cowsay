@@ -1,3 +1,8 @@
+msg.short <- "mooooo"
+msg.long <- "I do not like green eggs and ham. I do not like them, Sam I Am!"
+
+# --------
+
 context("gsubv")
 
 test_that("gsubv returns a character vector of the same length as x", {
@@ -66,4 +71,16 @@ test_that("wrap.message splits on newlines before wrapping", {
   expect_equal(wrap.message(paste(paste(letters, collapse=''), msg.long, sep='\n'), 10),
                strwrap(c(paste(letters, collapse=''), msg.long), 10))
 })
+test_that("wrap.message allows input to be a character vector", {
+  expect_equal(wrap.message(c(msg.long, msg.short), 10),
+               strwrap(c(msg.long, msg.short), 10))
+})
+test_that("wrap.message does not remove empty lines", {
+  expect_equal(wrap.message(c(msg.long, '', msg.short), 10),
+               strwrap(c(msg.long, '', msg.short), 10))
+})
+test_that("wrap.message splits on embedded newlines inside a character vector", {
+  expect_equal(wrap.message(c(msg.short, paste(msg.long, msg.short, collapse='\n')), 10),
+               strwrap(c(msg.short, msg.long, msg.short), 10))
 
+})
