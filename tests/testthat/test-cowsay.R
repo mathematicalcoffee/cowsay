@@ -63,7 +63,7 @@ test_that("cowsay's `wrap` argument is respected", {
   expect_match(quiet.cowsay(msg.long, wrap=-1), msg.long, fixed=T)  
   # test wrapping
   wr <- round(nchar(msg.long)/2)
-  expect_match(quiet.cowsay(msg.long, wrap=wr, think=F), construct.balloon(trim.message(msg.long, width=wr), think=F), fixed=T)  
+  expect_match(quiet.cowsay(msg.long, wrap=wr, think=F), construct.balloon(wrap.message(msg.long, width=wr), think=F), fixed=T)  
 })
 test_that("cowsay's `style` argument is respected", {
   default.eyes <- 'oo'
@@ -131,7 +131,7 @@ test_that("other arguments passed to `randomcowsay` override (note: `style` over
   expect_match(quiet.randomcowsay(msg.short, cow='default', style='greedy', tongue='V '), 'V ', fixed=T)
   
   # override 'wrap'
-  expect_match(quiet.randomcowsay(msg.long, wrap=10, think=F), construct.balloon(trim.message(msg.long, width=10), think=F),
+  expect_match(quiet.randomcowsay(msg.long, wrap=10, think=F), construct.balloon(wrap.message(msg.long, width=10), think=F),
                fixed=T)
   # other args are already tested in randomcowsay (think, cow, style)
 })
@@ -208,16 +208,6 @@ test_that('get.cowpaths has the $COWPATH paths before the package path', {
   expect_equal(get.cowpaths(),
                 c(paths, system.file('cows', package='cowsay')))
   Sys.setenv(COWPATH=oldenv)  
-})
-
-context("trim.message")
-test_that("trim.message produces output the same as `strwrap`", {
-  expect_equal(trim.message(msg.long, 10), strwrap(msg.long, 10))
-  expect_equal(trim.message(msg.long, nchar(msg.long) + 1), strwrap(msg.long, nchar(msg.long) + 1))
-})
-test_that("trim.message splits on newlines before wrapping", {
-  expect_equal(trim.message(paste(paste(letters, collapse=''), msg.long, sep='\n'), 10),
-               strwrap(c(paste(letters, collapse=''), msg.long), 10))
 })
 
 # note: does no wrapping

@@ -80,13 +80,13 @@ cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=60,
     # get the speech bubble
     # we assume that if there are multiple elements of `message` they are each
     # on their own line.
-    message <- get.text(message, store.print.method=TRUE)
+    message <- get.message(message, store.print.method=TRUE)
     if (!is.null(attr(message, 'print.method'))) {
         if (missing(wrap)) wrap <- 0
         attr(message, 'print.method') <- NULL
     }
     if (wrap > 0)
-        message <- trim.message(message, width=wrap)
+        message <- wrap.message(message, width=wrap)
     messagestring <- construct.balloon(message, think=think)
 
     the_cow <- paste(messagestring, cowstring, sep='\n')
@@ -250,30 +250,6 @@ get.cowpaths <- function() {
     #}
 
     return(paths)
-}
-
-#' Trims a message to a particular width.
-#'
-#' @inheritParams base::strwrap
-#' @return {character vector} a vector of `x` chunked up into lines of approximately
-#'   width `width`.
-#'   If there were embedded newlines in `x`, the input is also split up according
-#'   to this.
-#' @family utility functions
-#' @seealso \code{\link[base]{strwrap}}
-#' @examples
-#' cowsay:::trim.message('I do not like green eggs and ham.\nI do not like them, Sam I Am!',
-#'              width=10)
-trim.message <- function (x, width=0.8 * getOption("width")) {
-    x <- as.character(x)
-    x <- x[!is.na(x)] # for some reason as.character(fortune) sometimes
-                               # introduces these
-    
-    # in case there are embedded newlines...
-    if (length(x) == 1)
-        x <- strsplit(x, '\n')[[1]]
-    
-    return(strwrap(x, width=width))
 }
 
 #' Puts the message into the balloon

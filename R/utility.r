@@ -71,9 +71,9 @@ gsubv <- function (patterns, replacements, x, ...) {
 #' m <- lm(Sepal.Length ~ Species, iris)
 #' # compare
 #' cat(as.character(m), sep='\n') # with
-#' cat(get.text(m), sep='\n')
+#' cat(get.message(m), sep='\n')
 #' @family utility functions
-get.text <- function (x, store.print.method=FALSE) {
+get.message <- function (x, store.print.method=FALSE) {
     # if `x` is character, leave as-is.
     # otherwise, if it has a 'print' method, capture that output.
     # otherwise, use `as.character`.
@@ -87,6 +87,26 @@ get.text <- function (x, store.print.method=FALSE) {
     }
     return(as.character(x))
 }
+
+#' Wraps a message to a particular width.
+#'
+#' @inheritParams base::strwrap
+#' @return {character vector} a vector of `x` chunked up into lines of approximately
+#'   width `width`.
+#'   If there were embedded newlines in `x`, the input is also split up according
+#'   to this.
+#' @family utility functions
+#' @seealso \code{\link[base]{strwrap}}
+#' @examples
+#' cowsay:::wrap.message('I do not like green eggs and ham.\nI do not like them, Sam I Am!',
+#'              width=10)
+wrap.message <- function (x, width=0.8 * getOption("width")) {
+    # in case there are embedded newlines...
+    # the ifelse is purely to not drop blank lines of '' in the `unlist`.
+    x <- unlist(strsplit(ifelse(x == '', '\n', x), '\n'))
+    return(strwrap(x, width=width))
+}
+
 
 #' Does this object have a 'print' method?
 #' @param x {anything} an object that we will query for a print method.

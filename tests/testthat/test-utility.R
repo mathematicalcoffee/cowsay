@@ -56,3 +56,14 @@ test_that("gsubv passes through additional arguments to gsub", {
   # useBytes
   # ... dunno.
 })
+
+context("wrap.message")
+test_that("wrap.message produces output the same as `strwrap`", {
+  expect_equal(wrap.message(msg.long, 10), strwrap(msg.long, 10))
+  expect_equal(wrap.message(msg.long, nchar(msg.long) + 1), strwrap(msg.long, nchar(msg.long) + 1))
+})
+test_that("wrap.message splits on newlines before wrapping", {
+  expect_equal(wrap.message(paste(paste(letters, collapse=''), msg.long, sep='\n'), 10),
+               strwrap(c(paste(letters, collapse=''), msg.long), 10))
+})
+
