@@ -126,7 +126,7 @@ wrap.message <- function (x, width=0.8 * getOption("width")) {
 #' has.print(lm(cbind(Petal.Length, Petal.Width) ~ Species, iris))
 has.print <- function (x, return.method=FALSE) {
     for (cls in class(x)) {
-        m <- attr(methods(class=cls), 'info')
+        m <- attr(utils::methods(class=cls), 'info')
         if (length(o <- rownames(m)[m$generic == 'print']))
             if (return.method)
                 return(o)

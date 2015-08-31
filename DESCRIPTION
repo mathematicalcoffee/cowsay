@@ -8,6 +8,8 @@ Maintainer: Amy Chan <mathematical.coffee@gmail.com>
 Description: This is an R version of the original cowsay program written in
     Perl by Tony Monroe.
 License: GPL
+Imports:
+    utils
 Suggests:
     fortunes,
     testthat
