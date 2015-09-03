@@ -67,13 +67,13 @@ cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=getOpti
     eyes <- format(substring(eyes, 1, 2), width=2)
     tongue <- format(substring(tongue, 1, 2), width=2)
     thoughts <- ifelse(think, 'o', '\\')
-    
+
     # convert the cow into a path
     cowpath <- get.cowfile(cow)
     if (is.null(cowpath)) {
         stop(sprintf("Could not find the '%s' cowfile!", cow))
     }
-    
+
     # get the cow.
     cowstring <- get.cow(cowpath, eyes=eyes, tongue=tongue, thoughts=thoughts)
 
@@ -94,7 +94,7 @@ cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=getOpti
 
     the_cow <- paste(messagestring, cowstring, sep='\n')
     attr(the_cow, 'cowtype') <- attr(cowstring, 'cowtype')
-    
+
     message(the_cow, appendLF=FALSE)
     return(invisible(the_cow))
 }
@@ -106,18 +106,20 @@ cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=getOpti
 #'
 #' If any of the arguments `cow`, `style` or `think` are given, this overrides
 #'  the randomness for that argument.
-#'  
+#'
 #' Note that if you supply `eyes` or `tongue`, the style overrides these if it
 #'  has prespecified values for them.
 #'
 #' @inheritParams cowsay
+#' @inheritParams list.cows
 #' @param ... passed to \code{\link{cowsay}}.
+#' @seealso \code{\link{cowsayOptions}} to change whether rude cows are included by default, and which cows are rude.
 #' @family cowsay
 #' @export
 #' @examples
 #' randomcowsay('MOOOOO')
-randomcowsay <- function (message, cow=NULL, style=NULL, think=NULL, ...) {
-    if (is.null(cow)) cow <- sample(list.cows(), 1)
+randomcowsay <- function (message, cow=NULL, style=NULL, think=NULL, rude=cowsayOptions('rude'), ...) {
+    if (is.null(cow)) cow <- sample(list.cows(rude=rude), 1)
     if (is.null(style)) style <- sample(names(cow.styles), 1)
     if (is.null(think)) think <- runif(1) < .5
     # TODO: random eyes, tongue?
@@ -131,14 +133,21 @@ randomcowsay <- function (message, cow=NULL, style=NULL, think=NULL, ...) {
 #'
 #' @param path {character vector|NULL} path(s) to list the cows under. If NULL,
 #'              the cowpath is used (see \code{\link{get.cowpaths}}).
+#' @param rude {boolean} whether to include "rude" cows or not.
 #' @param ...  passed to \code{\link[base]{list.files}}.
 #' @return a character vector of cow files found in the path.
-#' @seealso \code{\link[base]{list.files}}
+#' @seealso \code{\link[base]{list.files}}; \code{\link{cowsayOptions}} to change whether rude cows are included by default, and which cows are rude.
 #' @export
 #' @family cow styles
-list.cows <- function (path=NULL, ...) {
+list.cows <- function (path=NULL, rude=cowsayOptions('rude'), ...) {
     if (is.null(path)) path=get.cowpaths()
-    list.files(path, pattern='*.r?cow', ...)
+    cows <- list.files(path, pattern='*.r?cow', ...)
+    # exclude rude cows (rude cows don't have an extension)
+    if (!rude) {
+        rude.cows <- cowsayOptions('rude.cows')
+        cows <- setdiff(cows, c(paste0(rude.cows, '.cow'), paste0(rude.cows, '.rcow')))
+    }
+    return(cows)
 }
 
 #' Cow styles (borg, dead, etc)
@@ -208,7 +217,7 @@ get.cowfile <- function (cow) {
         # return first cow on path that matches
         return(cowfile[file.exists(cowfile)][1])
     }
-    
+
     # 2. look for a Perl cow
     cowfile <- file.path(paths, paste0(cow, '.cow'))
     if (any(file.exists(cowfile))) {
@@ -219,19 +228,15 @@ get.cowfile <- function (cow) {
     return(NULL)
 }
 
-#' Path to cows if you install from the repositories
-.sys.cowpath <- '/usr/share/cowsay/cows'
-
 #' Returns the search path for cows.
 #'
 #' * if environment variable `$COWPATH` is set, we use that.
 #' * we always include the cows installed with this package.
-#' * we do NOT include '/usr/share/cowsay/cows'.
 #'
 #' Order matters; if a particular cow is found in one of the earlier paths, we
 #'  will not bother looking at the later paths (subject to the rules in
 #'  \code{\link{get.cowfile}}: Rcows are preferred over Perl cows).
-#' 
+#'
 #' @return {character vector} directories that cows will be looked for under.
 #' @family cow styles
 #' @export
@@ -278,7 +283,7 @@ get.cowpaths <- function() {
 #' cat(cowsay:::construct.balloon('MOOOO', think=TRUE))
 #' cat(cowsay:::construct.balloon('MOOOO', think=FALSE))
 #' cat(cowsay:::construct.balloon(c('MOOOO', 'MOOO!!!'), think=FALSE))
-construct.balloon <- function (message, think) {   
+construct.balloon <- function (message, think) {
     mlength <- max(nchar(message))
     format <- paste0("%s %-", mlength, "s %s")
     # determine the border elements.
@@ -290,7 +295,7 @@ construct.balloon <- function (message, think) {
     # e.g.::
     #
     # ( here is a      )   / here is a \
-    # ( thought bubble )   | multiline |   < one-line speech bubble >     
+    # ( thought bubble )   | multiline |   < one-line speech bubble >
     #                      \ bubble    /
     n <- length(message)
     border.left <- '<'
@@ -303,7 +308,7 @@ construct.balloon <- function (message, think) {
         border.left <- c('/', rep('|', n - 2), '\\')
         border.right <- c('\\', rep('|', n - 2), '/')
     }
-    
+
     # dumb multi-use of paste because if R not having nice strrep
     firstline <- paste0(' ', paste(rep('_', mlength + 2), collapse=''))
     lastline <- paste0(' ', paste(rep('-', mlength + 2), collapse=''))
@@ -412,7 +417,7 @@ read.cow.r <- function (cowfile, eyes, thoughts, tongue) {
                                          e$message),
                                  call.=F)
                         }))
-       
+
         # update values
         eyes <- env$eyes
         thoughts <- env$thoughts
@@ -420,7 +425,7 @@ read.cow.r <- function (cowfile, eyes, thoughts, tongue) {
     }
 
     # read the plain cow
-    cow <- read.cow.plain(cowfile, eyes, thoughts, tongue) 
+    cow <- read.cow.plain(cowfile, eyes, thoughts, tongue)
     return(cow)
 }
 
@@ -448,10 +453,10 @@ read.cow.plain <- function (cowfile, eyes, thoughts, tongue) {
     lines <- lines[grep('^#', lines, invert=T)]
     # add newline at end
     if (!grepl('^\\s*$', lines[length(lines)])) lines=c(lines, '')
-    cow <- paste(lines, collapse="\n") 
+    cow <- paste(lines, collapse="\n")
     cow <- gsubv(c('$eyes', '$thoughts', '$tongue'),
                  c(eyes, thoughts, tongue),
-                 cow, fixed=T)    
+                 cow, fixed=T)
     return(cow)
 }
 
@@ -491,7 +496,7 @@ read.cow.perl <- function (cowfile, eyes, thoughts, tongue, perl=Sys.which('perl
                   shQuote(eyes),
                   shQuote(tongue)),
                 stderr=F,
-                stdout=T)        
+                stdout=T)
         if (length(res) == 0) {
             stop(sprintf("The resulting cow was empty; error in the cowfile '%s'?", cowfile))
         } else {
@@ -543,6 +548,6 @@ read.cow.noperl <- function (cowfile, eyes, thoughts, tongue) {
     cow <- paste(lines, collapse="\n")
     cow <- gsubv(c('$eyes', '$thoughts', '$tongue'),
                  c(eyes, thoughts, tongue),
-                 cow, fixed=T)    
+                 cow, fixed=T)
     return(cow)
 }
