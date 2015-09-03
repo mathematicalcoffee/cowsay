@@ -2,7 +2,7 @@
 % Please edit documentation in R/cowsay.r
 \name{get.cow}
 \alias{get.cow}
-\title{Reads a cow from a cowfile.}
+\title{Reads a cow from a cowfile, substituting the eyes, thoughts and tongue.}
 \usage{
 get.cow(cowfile, eyes, thoughts, tongue)
 }
@@ -22,19 +22,9 @@ a character string with the cow (with embedded newlines), and
   eyes, thoughts, tongue substituted in.
 }
 \description{
-Reads a cow from a cowfile.
-}
-\details{
-1. If the file has extension `rcow`, we read it in as an R cow (\code{\link{read.cow.r}}).
-2. Otherwise, if the file assigns to `$the_cow` at some point, we assume it
-     is a Perl cow and read it in with \code{\link{read.cow.perl}} or
-     \code{\link{read.cow.noperl}} depending if you have Perl installed or not.
-3. Otherwise we just read it in as a plain cow (\code{\link{read.cow.plain}}).
+Returns an error if the cow does not exist.
 }
 \seealso{
-Other cowfile parsing: \code{\link{is.perl.cow}};
-  \code{\link{read.cow.noperl}};
-  \code{\link{read.cow.perl}};
-  \code{\link{read.cow.plain}}; \code{\link{read.cow.r}}
+Other cowfile parsing: \code{\link{read.cow.r}}
 }
 

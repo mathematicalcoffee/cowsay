@@ -2,7 +2,7 @@
 % Please edit documentation in R/cowsay.r
 \name{read.cow.r}
 \alias{read.cow.r}
-\title{Reads an R-cow.}
+\title{Read an R-cow}
 \usage{
 read.cow.r(cowfile, eyes, thoughts, tongue)
 }
@@ -22,24 +22,28 @@ a character string with the cow (with embedded newlines), and
   eyes, thoughts, tongue substituted in.
 }
 \description{
-Reads an R-cow.
+Read an R-cow
 }
 \details{
 R-cows consist of 1 (optionally 2) files:
 
 * `{cowname}.rcow`, which is an ASCII file consisting of the cow as-is,
-    where comments (lines starting with `#`) are ignored - just like a plain cow.
+    where lines starting with '#' are ignored as comments. If your cow has a
+    legitimate line starting with has, indent the entire cow a space.
+   In the file, the placeholders '$eyes', '$tongue' and '$thoughts' will be
+   replaced by the user-provided eyes (2 characters), tongue (2 characters)
+   and thoughts (1 character).
 * (optional) `{cowname}.r`, an R file that (if it exists) is run BEFORE the
     rcow file is read in.
 
 Note that the parameter `cowfile` is the path to the ASCII cow (`{cowname}.rcow`).
 Then if `{cowname}.r` exists, it will be run prior.
 
-The reason of having two separate parts is if you decide instead that
+The reason for having two separate files is if you decide instead that
 R-cows should be R scripts, it's harder to define them purely because of
 having to remember to escape backslashes, quotes, etc in the ASCII.
 
-This way, the plain cow part can be entirely unescaped, and the R script can
+This way, the cow art can be entirely unescaped, and the R script can
  include the R.
 }
 \examples{
@@ -48,8 +52,6 @@ cowfile <- system.file('cows', 'three-eyes.rcow', package='cowsay')
 cat(cowsay:::read.cow.r(cowfile, eyes="..", thoughts="o", tongue="U"))
 }
 \seealso{
-Other cowfile parsing: \code{\link{get.cow}};
-  \code{\link{is.perl.cow}}; \code{\link{read.cow.noperl}};
-  \code{\link{read.cow.perl}}; \code{\link{read.cow.plain}}
+Other cowfile parsing: \code{\link{get.cow}}
 }
 

@@ -18,7 +18,7 @@ the cowpath is used (see \code{\link{get.cowpaths}}).}
 a character vector of cow files found in the path.
 }
 \description{
-This lists all the `*.cow`, `*.rcow` files found under `path`.
+This lists all the `*.rcow` files found under `path`.
 }
 \seealso{
 \code{\link[base]{list.files}}; \code{\link{cowsayOptions}} to change whether rude cows are included by default, and which cows are rude.

@@ -11,26 +11,28 @@ get.cowfile(cow)
 \code{\link{list.cows}})}
 }
 \value{
-{character} the path to the first matching cow on the cowpath, or
- NULL if not found.
+{character} the path to the first matching cow on the cowpath, throwing an error if not found.
 }
 \description{
 Looks for cows in this order:
 }
 \details{
-1. If the input is a filename with extension 'cow' or 'rcow' and exists, we use it;
-2. The corresponding R cow (`{cow}.rcow`) in the cowpath in order;
-3. a Perl/plain cow with extension '.cow' (e.g. you downloaded a cow pack
-    and have not ported them to rcows or plaincows yet)
+1. If the input is a filename with extension '.rcow' and exists, we use it.
+2. Otherwise find the corresponding `{cow}.rcow` on the cowpath.
 
 Note that the `cow` should NOT have the extension
  (i.e. "three-eyes", not "three-eyes.cow")
 }
 \examples{
-get.cowfile('default')
+get.cowfile(system.file('cows/default.rcow', package='cowsay'))
 get.cowfile('three-eyes')
+\dontrun{
+get.cowfile('nonexistentfoobarbaz')
+}
 }
 \seealso{
+\code{\link{get.cowpaths}} to see the cowpath.
+
 Other cow styles: \code{\link{cow.styles}};
   \code{\link{get.cowpaths}}; \code{\link{list.cows}}
 }

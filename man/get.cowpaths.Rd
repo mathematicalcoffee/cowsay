@@ -15,8 +15,7 @@ get.cowpaths()
 }
 \details{
 Order matters; if a particular cow is found in one of the earlier paths, we
- will not bother looking at the later paths (subject to the rules in
- \code{\link{get.cowfile}}: Rcows are preferred over Perl cows).
+ will not bother looking at the later paths.
 }
 \seealso{
 Other cow styles: \code{\link{cow.styles}};

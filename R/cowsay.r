@@ -53,9 +53,6 @@ cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=60,
 
     # convert the cow into a path
     cowpath <- get.cowfile(cow)
-    if (is.null(cowpath)) {
-        stop(sprintf("Could not find the '%s' cowfile!", cow))
-    }
 
     # get the cow.
     cowstring <- get.cow(cowpath, eyes=eyes, tongue=tongue, thoughts=thoughts)
@@ -68,7 +65,6 @@ cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=60,
     messagestring <- construct.balloon(message, think=think)
 
     the_cow <- paste(messagestring, cowstring, sep='\n')
-    attr(the_cow, 'cowtype') <- attr(cowstring, 'cowtype')
 
     message(the_cow, appendLF=FALSE)
     return(invisible(the_cow))
@@ -104,7 +100,7 @@ randomcowsay <- function (message, cow=NULL, style=NULL, think=NULL, rude=cowsay
 
 #' Lists the currently-installed cows.
 #'
-#' This lists all the `*.cow`, `*.rcow` files found under `path`.
+#' This lists all the `*.rcow` files found under `path`.
 #'
 #' @param path {character vector|NULL} path(s) to list the cows under. If NULL,
 #'              the cowpath is used (see \code{\link{get.cowpaths}}).
@@ -116,11 +112,11 @@ randomcowsay <- function (message, cow=NULL, style=NULL, think=NULL, rude=cowsay
 #' @family cow styles
 list.cows <- function (path=NULL, rude=cowsayOptions('rude'), ...) {
     if (is.null(path)) path=get.cowpaths()
-    cows <- list.files(path, pattern='*.r?cow', ...)
+    cows <- list.files(path, pattern='*.rcow', ...)
     # exclude rude cows (rude cows don't have an extension)
     if (!rude) {
         rude.cows <- cowsayOptions('rude.cows')
-        cows <- setdiff(cows, c(paste0(rude.cows, '.cow'), paste0(rude.cows, '.rcow')))
+        cows <- setdiff(cows, paste0(rude.cows, '.rcow'))
     }
     return(cows)
 }
@@ -160,47 +156,42 @@ cow.styles <- list(
 #'
 #' Looks for cows in this order:
 #'
-#' 1. If the input is a filename with extension 'cow' or 'rcow' and exists, we use it;
-#' 2. The corresponding R cow (`{cow}.rcow`) in the cowpath in order;
-#' 3. a Perl/plain cow with extension '.cow' (e.g. you downloaded a cow pack
-#'     and have not ported them to rcows or plaincows yet)
+#' 1. If the input is a filename with extension '.rcow' and exists, we use it.
+#' 2. Otherwise find the corresponding `{cow}.rcow` on the cowpath.
 #'
 #' Note that the `cow` should NOT have the extension
 #'  (i.e. "three-eyes", not "three-eyes.cow")
 #' @inheritParams cowsay
-#' @return {character} the path to the first matching cow on the cowpath, or
-#'  NULL if not found.
+#' @return {character} the path to the first matching cow on the cowpath, throwing an error if not found.
+#' @seealso \code{\link{get.cowpaths}} to see the cowpath.
 #' @family cow styles
 #' @examples
-#' get.cowfile('default')
+#' get.cowfile(system.file('cows/default.rcow', package='cowsay'))
 #' get.cowfile('three-eyes')
+#' \dontrun{
+#' get.cowfile('nonexistentfoobarbaz')
+#' }
 #' @export
 get.cowfile <- function (cow) {
-    # 0 check if it's a path that exists and has extension r?cow
-    if (file.exists(cow) && grepl('\\.r?cow$', cow)) {
+    # 1. check if it's a path that exists and has extension rcow
+    if (file.exists(cow) && grepl('\\.rcow$', cow)) {
         return(cow)
     }
+
     # strip extension
-    cow <- sub('\\.r?cow$', '', cow)
+    cow <- sub('\\.rcow$', '', cow)
 
     # get search path
     paths <- get.cowpaths()
 
-    # 1. look for an rcow
+    # 2. Look for the rcow on that path, returning the first found.
     cowfile <- file.path(paths, paste0(cow, '.rcow'))
     if (any(file.exists(cowfile))) {
         # return first cow on path that matches
         return(cowfile[file.exists(cowfile)][1])
     }
 
-    # 2. look for a Perl cow
-    cowfile <- file.path(paths, paste0(cow, '.cow'))
-    if (any(file.exists(cowfile))) {
-        # return first cow on path that matches
-        return(cowfile[file.exists(cowfile)][1])
-    }
-
-    return(NULL)
+    stop(sprintf("Could not find the '%s' cowfile!", cow))
 }
 
 #' Returns the search path for cows.
@@ -209,8 +200,7 @@ get.cowfile <- function (cow) {
 #' * we always include the cows installed with this package.
 #'
 #' Order matters; if a particular cow is found in one of the earlier paths, we
-#'  will not bother looking at the later paths (subject to the rules in
-#'  \code{\link{get.cowfile}}: Rcows are preferred over Perl cows).
+#'  will not bother looking at the later paths.
 #'
 #' @return {character vector} directories that cows will be looked for under.
 #' @family cow styles
@@ -226,11 +216,6 @@ get.cowpaths <- function() {
 
     # 2. System path
     paths <- c(paths, system.file('cows', package='cowsay'))
-
-    # 3. '/usr/share/cowsay/cows' (if exists)
-    #if (isTRUE(file.info(.sys.cowpath)$isdir)) {
-    #    paths <- c(paths, .sys.cowpath)
-    #}
 
     return(paths)
 }
@@ -318,60 +303,19 @@ construct.balloon <- function (message, think) {
     return(balloon)
 }
 
-#' Reads a cow from a cowfile.
+#' Reads a cow from a cowfile, substituting the eyes, thoughts and tongue.
+#'
+#' Returns an error if the cow does not exist.
 #' @template cow-features
 #' @template cowfile
-#' @details
-#'
-#' 1. If the file has extension `rcow`, we read it in as an R cow (\code{\link{read.cow.r}}).
-#' 2. Otherwise, if the file assigns to `$the_cow` at some point, we assume it
-#'      is a Perl cow and read it in with \code{\link{read.cow.perl}} or
-#'      \code{\link{read.cow.noperl}} depending if you have Perl installed or not.
-#' 3. Otherwise we just read it in as a plain cow (\code{\link{read.cow.plain}}).
-#'
 get.cow <- function (cowfile, eyes, thoughts, tongue) {
-    cow <- NULL
-    # 1. If it's an Rcow, read it in as such.
-    if (grepl('\\.rcow$', cowfile)) {
-        # 1. try R
-        cow <- read.cow.r(cowfile, eyes=eyes, thoughts=thoughts, tongue=tongue)
-        attr(cow, 'cowtype') <- 'R'
-
-    # 2. If it's a Perl cow, read it in as such
-    } else if (is.perl.cow(cowfile)) {
-        PERL <- Sys.which('perl')[1]
-        if (PERL != '') {
-            cow <- read.cow.perl(cowfile, eyes=eyes, thoughts=thoughts, tongue=tongue)
-            attr(cow, 'cowtype') <- 'perl'
-        } else {
-            cow <- read.cow.noperl(cowfile, eyes=eyes, thoughts=thoughts, tongue=tongue)
-            attr(cow, 'cowtype') <- 'noperl'
-        }
-
-    # 3. Otherwise, it's a plain cow.
-    } else {
-        cow <- read.cow.plain(cowfile, eyes=eyes, thoughts=thoughts, tongue=tongue)
-        attr(cow, 'cowtype') <- 'plain'
-    }
-
+    if (!grepl('\\.rcow$', cowfile) || !file.exists(cowfile))
+        stop(sprintf("The cowfile '%s' doesn't exist or doesn't have extension '.rcow'.", cowfile))
+    cow <- read.cow.r(cowfile, eyes=eyes, thoughts=thoughts, tongue=tongue)
     return(cow)
 }
 
-#' Is a cow a Perl-cow?
-#' A cow is a perl cow if `$the_cow` can be found in the file (rudimentary check!) and the extension is '.cow'.
-#' @inheritParams get.cow
-#' @family cowfile parsing
-#' @return {boolean} whether the cow is a Perl cow or not.
-is.perl.cow <- function (cowfile) {
-    isperlcow <- file.exists(cowfile)
-    if (!isperlcow) return(isperlcow)
-    isperlcow <- grepl('\\.cow$', cowfile, ignore.case=T)
-    if (!isperlcow) return(isperlcow)
-    isperlcow <- isperlcow && length(grep('$the_cow', readLines(cowfile), fixed=T))
-    return(isperlcow)
-}
-
-#' Reads an R-cow.
+#' Read an R-cow
 #'
 #' @template cow-features
 #' @template cowfile
@@ -379,18 +323,22 @@ is.perl.cow <- function (cowfile) {
 #' R-cows consist of 1 (optionally 2) files:
 #'
 #' * `{cowname}.rcow`, which is an ASCII file consisting of the cow as-is,
-#'     where comments (lines starting with `#`) are ignored - just like a plain cow.
+#'     where lines starting with '#' are ignored as comments. If your cow has a
+#'     legitimate line starting with has, indent the entire cow a space.
+#'    In the file, the placeholders '$eyes', '$tongue' and '$thoughts' will be
+#'    replaced by the user-provided eyes (2 characters), tongue (2 characters)
+#'    and thoughts (1 character).
 #' * (optional) `{cowname}.r`, an R file that (if it exists) is run BEFORE the
 #'     rcow file is read in.
 #'
 #' Note that the parameter `cowfile` is the path to the ASCII cow (`{cowname}.rcow`).
 #' Then if `{cowname}.r` exists, it will be run prior.
 #'
-#' The reason of having two separate parts is if you decide instead that
+#' The reason for having two separate files is if you decide instead that
 #' R-cows should be R scripts, it's harder to define them purely because of
 #' having to remember to escape backslashes, quotes, etc in the ASCII.
 #'
-#' This way, the plain cow part can be entirely unescaped, and the R script can
+#' This way, the cow art can be entirely unescaped, and the R script can
 #'  include the R.
 #' @examples
 #' # three-eyes cow has .r and .rcow (.r file expands the eyes so it has 3)
@@ -398,8 +346,8 @@ is.perl.cow <- function (cowfile) {
 #' cat(cowsay:::read.cow.r(cowfile, eyes="..", thoughts="o", tongue="U"))
 read.cow.r <- function (cowfile, eyes, thoughts, tongue) {
     # search for an R file of the same name
-    rfile <- c(sub('\\.r?cow$', '.r', cowfile),
-              sub('\\.r?cow$', '.R', cowfile))
+    rfile <- c(sub('\\.rcow$', '.r', cowfile),
+              sub('\\.rcow$', '.R', cowfile))
     rfile <- rfile[file.exists(rfile)][1]
     # this file is not mandatory, just optional. so no errors if not exists
     if (!is.na(rfile)) {
@@ -424,124 +372,8 @@ read.cow.r <- function (cowfile, eyes, thoughts, tongue) {
     }
 
     # read the plain cow
-    cow <- read.cow.plain(cowfile, eyes, thoughts, tongue)
-    return(cow)
-}
-
-
-#' Read a plain-text cow
-#'
-#' Reads a cowfile where we take the cow as-is (comment lines allowed), do
-#'  a straight substitution of eyes/tongue/thoughts tokens.
-#' @template cow-features
-#' @template cowfile
-#' @details
-#' The cow file:
-#'
-#' * can have comments. ANY line starting with `#` is a comment and is ignored.
-#'   (if your cow has a line starting with `#`, indent the entire cow one space).
-#' * can use the placeholders '$eyes', '$tongue', '$thoughts'; these are replaced
-#' * every non-comment line is just the ASCII cow as-is (i.e. no `the_cow = `
-#'     required).
-#' @examples
-#' # this cow happens to be a simple one (no further code required)
-#' cowfile <- system.file('cows', 'small.rcow', package='cowsay')
-#' cat(cowsay:::read.cow.plain(cowfile, eyes="..", thoughts="o", tongue="U"))
-read.cow.plain <- function (cowfile, eyes, thoughts, tongue) {
     lines <- readLines(cowfile)
     lines <- lines[grep('^#', lines, invert=T)]
-    # add newline at end
-    if (!grepl('^\\s*$', lines[length(lines)])) lines=c(lines, '')
-    cow <- paste(lines, collapse="\n")
-    cow <- gsubv(c('$eyes', '$thoughts', '$tongue'),
-                 c(eyes, thoughts, tongue),
-                 cow, fixed=T)
-    return(cow)
-}
-
-#' Read a cowfile (original Perl format)
-#'
-#' These are cow files from the original cowsay distribution, written in Perl.
-#' We run them through a perl interpreter (if you have one installed); if you
-#' don't have Perl installed we throw an error.
-#' @template cow-features
-#' @template cowfile
-#' @param perl {string}: path to the Perl executable (by default
-#'         `Sys.which('perl')[1]`)
-#' @examples
-#' \dontrun{
-#' # if you have the original cowsay installed on your system...
-#' cowfile <- '/usr/share/cowsay/cows/three-eyes.cow'
-#' cat(cowsay:::read.cow.perl(cowfile, eyes="Oo", thoughts="\\", tongue="U"))
-#' #         \  ^___^
-#' #          \ (Ooo)\_______
-#' #            (___)\       )\/\
-#' #             U  ||----w |
-#' #                 ||     ||
-#' }
-# To get around escaping problems:
-# http://stackoverflow.com/questions/16632223/executing-perl-from-r-perlquote-shquote
-# TODO: mistake in perl file?
-read.cow.perl <- function (cowfile, eyes, thoughts, tongue, perl=Sys.which('perl')[1]) {
-    res <- NULL
-    if (perl == '') {
-        stop("You must have Perl installed and on your $PATH in order to read a Perl cowfile. Consider trying `read.cow.noperl`.")
-    } else {
-        # apparently system2 is better than system.
-        res <- system2(perl,
-                c('-e',
-                  shQuote(sprintf('our ($thoughts, $eyes, $tongue) = @ARGV; do %s; print $the_cow', shQuote(cowfile))),
-                  shQuote(thoughts),
-                  shQuote(eyes),
-                  shQuote(tongue)),
-                stderr=F,
-                stdout=T)
-        if (length(res) == 0) {
-            stop(sprintf("The resulting cow was empty; error in the cowfile '%s'?", cowfile))
-        } else {
-            # add newline at end
-            if (!grepl('^\\s*$', res[length(res)])) res=c(res, '')
-            res <- paste(res, collapse="\n")
-        }
-  }
-  return(res)
-}
-
-#' Reads a Perl-style cowfile where Perl is not installed (crude substitutions)
-#'
-#' @template cow-features
-#' @template cowfile
-#' @details
-#' If you are trying to read in a Perl-style cowfile but Perl is not installed,
-#' this tries to read it in and use some EXTREMELY rudimentary regex to parse
-#' the cow:
-#'
-#' 1. Strip the `$the_cow = <<"EOC";` and `EOC` lines if they are there
-#' 2. Replace `$eyes`, `$tongue` and `$thoughts` with the appropriate values
-#'
-#' Any lines before `$the_cow << EOC` and after the ending `EOC` are ignored.
-#'
-#' Everything else (including any other code) is read verbatim! So you really
-#' don't want to be in the situation where you're using this function.
-read.cow.noperl <- function (cowfile, eyes, thoughts, tongue) {
-    lines <- readLines(cowfile)
-    thecow <- grep('\\$the_cow *= *<< *', lines)
-    if (length(thecow)) {
-        cowline <- lines[thecow[1]]
-        # trim out everything up to & including the '$the_cow << EOC;' line.
-        lines <- lines[(thecow[1] + 1):length(lines)]
-
-        # trim out everything after & including the final 'EOC' line.
-        m <- regexpr('\\$the_cow *= *<< *"?([A-Za-z_]+)"? *; *$', cowline, perl=T)
-        st <- attr(m, 'capture.start')
-        if (m != -1) {
-            EOC <- substr(cowline, st, st + attr(m, 'capture.length') - 1)
-            endline <- grep(paste0('^', EOC, ' *$'), lines)
-            if (length(endline)) {
-                lines <- lines[1:(endline-1)]
-            }
-        }
-    }
     # add newline at end
     if (!grepl('^\\s*$', lines[length(lines)])) lines=c(lines, '')
     cow <- paste(lines, collapse="\n")
