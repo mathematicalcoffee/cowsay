@@ -136,15 +136,17 @@ See `cow.styles` to see the available cow styles.
 
 ## Add your own cows
 
-Cows can be either R cows, Perl cows (like the original cowsay), or plain-text cows. It's preferred that you add either an R cow or plain cow; Perl cows only work properly if the user has Perl installed on their system. Cows are just a plain-text file with extension '.cow' or '.rcow', possibly with an additional R script. Once you create your cow, you can provide the path to the cowfile in the `cow` argument of `cowsay`, or you can add the path to `cowsay`'s search list (see [Adding to the cow search path](#adding-to-the-cow-search-path)).
+Cows are a plain-text file with extension '.rcow', possibly with an additional R script. Once you create your cow, you can provide the path to the cowfile in the `cow` argument of `cowsay`, or you can add the path to `cowsay`'s search list (see [Adding to the cow search path](#adding-to-the-cow-search-path)).
 
-### Plain-text cows
+### R cows
 
-These are the simplest sorts of cows; they are just a plaintext file with the ASCII that is the cow in it. It has extension '.cow'.
+An R cow is a plain-text file with extension '.rcow', optionally with an extra R file.
 
-Use `$eyes`, `$tongue` and `$thoughts` in the file. `$eyes` and `$tongue` are replaced by the user-specified eyes and tongue, being strings of length two (if the user specifies longer eyes only the first two characters are used; if they specify a one-character eye it is padded with a space). The `$thoughts` token is the 'stem' part of the speech bubble, not the speech bubble itself. For a cow that is thinking, this is 'o' (dots leading up to the thought bubble); for a cow that is speaking, this is '\\' (speech bubble stem).
+The `.rcow` file contains an ascii drawing of the cow, and possibly special tokens `$eyes`, `$tongue` and `$thoughts`. Any occurence of `$eyes` or `$tongue` will be replaced by the user-specified eyes/tongue, being strings of length two (padded with a space if not long enough), e.g. '`oo`' for eyes and '`U `' for a tongue. The `$thoughts` token is the 'stem' part of the speech bubble, not the speech bubble itself. For a cow that is thinking, this is 'o' (dots leading up to the thought bubble). For a cow that is speaking, this is '\' (speech bubble stem).
 
-**Any** line starting with a '#' will be ignored, **even if it is part of your cow!**. If your cow has lines that start with '#' that should be part of the cow, indent the entire cow one space.
+(Yes, this makes it hard to visualise your cow when ugly things like '`$eyes`' are distorting it. I suggest you draw your cow with (e.g.) '`oo`' as the eyes at first, and then when you are happy with the look of it, replace it with '`$eyes`' later. Same for `$tongue` and `$thoughts`).
+
+Any line starting with a '#' will be ignored, even if it is part of your cow!. If your cow has lines that start with '#' that should be part of the cow, indent the entire cow one space.
 
 Example (the default cow, you can see him at the start of the Readme):
 
@@ -157,45 +159,30 @@ Example (the default cow, you can see him at the start of the Readme):
                 ||     ||
 ```
 
-### R cows
+If you want to modify the eyes, thoughts or tongue **before** they are substituted into the cow, you can also provide an R file ('.r' or '.R') with the same name as the associated cow. For example, 'default.rcow' with 'default.r'. Any code in the R file is executed, **then** the rcow file is read. In the R file, you have the variables `eyes`, `thoughts` and `tongue` (the user-specified values) that you can modify. These modified values are used in the cowfile.For example, if `default.r` had:
 
-An R cow is a plaintext cow (extension '.rcow') with an extra R file. The R file must have extension '.r' or '.R' and have the same name as its associated cow. For example, 'default.rcow' with 'default.r'.
-
-Any code in the R file is executed, **then** the rcow file is read as for a plain-text cow. You typically use the R file to modify the eyes, thoughts or tongue before it is fed in to the cowfile. In the R file, you have the variables `eyes`, `thoughts` and `tongue` (the user-specified values) that you can modify. These modified values are used in the cowfile. For example, if `default.r` had:
-
-```{r}
+```r
 # convert the eyes to lowercase
 eyes <- tolower(eyes)
 ```
 
 And `default.rcow` just had the default cow, then the eyes that the user passes in will be converted to lowercase before the cow is read in.
 
-So in summary: Rcows are plaintext cows, where you can do preprocessing of the eyes/tongue/thoughts in an R file prior to reading in the cow.
-
 **SECURITY NOTE**: of course **any** code in the '.r' file is executed, so someone could put malicious code in here and send the file to you under the guise of it being a cowfile. **Check any R files that claim to be cows before you use them!** I am not responsible if someone deletes all your files in their Rcow (which then shows you the satanic-style cow saying "MUAHAHAHA YOU IDIOT"). In terms of what is distributed with this package, the only two cows with R files are [three-eyes](https://github.com/mathematicalcoffee/cowsay/blob/master/inst/cows/three-eyes.r), which makes a three-eyed cow (converts the two-character eyes to three characters) and [udder](https://github.com/mathematicalcoffee/cowsay/blob/master/inst/cows/udder.r), which requires the eyes to have a space in between them. You may verify for yourself that this is all the R files do.
-
-
-### Perl cows
-
-A Perl cow has extension '.cow', and it's got the same format as the cows in the original cowsay (which was written in Perl).
-
-That is, it's just a perl script that:
-
-* assigns some value to `$the_cow`, which is the resulting cow
-* has access to the variables `$eyes`, `$tongue` and `$thoughts`
-* can have Perl code in it (but only `$the_cow` is used for the resulting cow).
-
-Note that if the user does not have Perl installed on their system, the cow will display, but probably with all of the Perl code in it too (we try to do some rudimentary preprocessing like substituting in the `$eyes`, `$tongue` and `$thoughts` tokens, and extracting just the text between `$the_cow =<<"EOC";` and the final `EOC` as the cow, but it's a poor substitute for actually having Perl).
 
 ### Adding to the cow search path
 
 To tell the `cowsay` package where the cows are, set your `COWPATH` environment variable to the directory these cows are in. You can put multiple paths in here, separated by ';' (Windows) or ':' (Linux), e.g.
 
 ```
-export COWPATH=$HOME/.cows:/usr/share/cowsay/cows
+export COWPATH=$HOME/.cows:/another/path/to/cows
 ```
 
 The `cowsay` package always adds the path to the cows provided in this package on the end, i.e. `system.file('cows', package='cowsay')`. Cows found earlier on the `COWPATH` override those found later.
+
+### ~~Perl cows~~
+
+There used to be support to read the original cowfile format (Perl-style), by calling Perl if the user had it installed or doing a crude parsing in R if not. It was later removed since this is an **R** package, after all. It seemed silly to have all the different sorts of cowfile formats. Cows can be converted from Perl-style to R-style very easily anyway. However, the branch `perl-cows` is (or should be) a copy of the `master` branch with the perl-cow-reading functions, for posterity (and in case I decide to put this support back in).
 
 ## Devnotes
 
