@@ -4,9 +4,9 @@
 \alias{cowsay}
 \title{calls cowsay}
 \usage{
-cowsay(message, cow = "default", eyes = "oo", tongue = "  ", wrap = 60,
-  think = F, style = c("borg", "dead", "default", "greedy", "paranoid",
-  "stoned", "tired", "wired", "young"))
+cowsay(message, cow = "default", eyes = "oo", tongue = "  ",
+  wrap = getOption("width"), think = F, style = c("borg", "dead",
+  "default", "greedy", "paranoid", "stoned", "tired", "wired", "young"))
 }
 \arguments{
 \item{message}{{string} what to say}
@@ -20,7 +20,11 @@ cowsay(message, cow = "default", eyes = "oo", tongue = "  ", wrap = 60,
 \item{tongue}{{string} characters to use for the tongue
 (at most the first two characters are used), e.g. "U", "\/"}
 
-\item{wrap}{{integer} number of characters to wrap the message at (-1 not to wrap)}
+\item{wrap}{{integer} number of characters to wrap the message at (-1 not to wrap)
+Note that if not explicity specified, this will set `wrap=-1`
+if the input `message` has a specific `print` method (so that, for
+example, `cowsay`-ing the results of a t-test will not wrap and
+mess up the output).}
 
 \item{think}{{logical} is the cow thinking rather than saying?}
 
@@ -53,6 +57,19 @@ The available cow styles are:
 \examples{
 cowsay('mooooo')
 cowsay('moooo', eyes='Oo')
+
+# let's cowsay some more interesting things.
+Note this doesn't wrap even though the length might exceed your `getOption('wrap')`.
+ This is done automagically to avoid messed up output.
+cowsay(head(mtcars))
+# if `wrap` is explicity provided, we can override that.
+cowsay(head(mtcars), wrap=60)
+
+\dontrun{
+# every .Rprofile should have this..
+library(fortunes)
+cowsay(fortune())
+}
 }
 \seealso{
 Other cowsay: \code{\link{randomcowsay}}

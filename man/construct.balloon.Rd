@@ -37,7 +37,4 @@ cat(cowsay:::construct.balloon('MOOOO', think=TRUE))
 cat(cowsay:::construct.balloon('MOOOO', think=FALSE))
 cat(cowsay:::construct.balloon(c('MOOOO', 'MOOO!!!'), think=FALSE))
 }
-\seealso{
-Other speech bubble functions: \code{\link{trim.message}}
-}
 
