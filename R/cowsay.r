@@ -88,11 +88,12 @@ cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=60,
 #' @inheritParams cowsay
 #' @inheritParams list.cows
 #' @param ... passed to \code{\link{cowsay}}.
+#' @seealso \code{\link{cowsayOptions}} to change whether rude cows are included by default, and which cows are rude.
 #' @family cowsay
 #' @export
 #' @examples
 #' randomcowsay('MOOOOO')
-randomcowsay <- function (message, cow=NULL, style=NULL, think=NULL, rude=FALSE, ...) {
+randomcowsay <- function (message, cow=NULL, style=NULL, think=NULL, rude=cowsayOptions('rude'), ...) {
     if (is.null(cow)) cow <- sample(list.cows(rude=rude), 1)
     if (is.null(style)) style <- sample(names(cow.styles), 1)
     if (is.null(think)) think <- runif(1) < .5
@@ -110,10 +111,10 @@ randomcowsay <- function (message, cow=NULL, style=NULL, think=NULL, rude=FALSE,
 #' @param rude {boolean} whether to include "rude" cows or not.
 #' @param ...  passed to \code{\link[base]{list.files}}.
 #' @return a character vector of cow files found in the path.
-#' @seealso \code{\link[base]{list.files}}
+#' @seealso \code{\link[base]{list.files}}; \code{\link{cowsayOptions}} to change whether rude cows are included by default, and which cows are rude.
 #' @export
 #' @family cow styles
-list.cows <- function (path=NULL, rude=FALSE, ...) {
+list.cows <- function (path=NULL, rude=cowsayOptions('rude'), ...) {
     if (is.null(path)) path=get.cowpaths()
     cows <- list.files(path, pattern='*.r?cow', ...)
     # exclude rude cows (rude cows don't have an extension)
@@ -202,14 +203,10 @@ get.cowfile <- function (cow) {
     return(NULL)
 }
 
-#' Path to cows if you install from the repositories
-.sys.cowpath <- '/usr/share/cowsay/cows'
-
 #' Returns the search path for cows.
 #'
 #' * if environment variable `$COWPATH` is set, we use that.
 #' * we always include the cows installed with this package.
-#' * we do NOT include '/usr/share/cowsay/cows'.
 #'
 #' Order matters; if a particular cow is found in one of the earlier paths, we
 #'  will not bother looking at the later paths (subject to the rules in

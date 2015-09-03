@@ -2,6 +2,7 @@
 context('cowsayOptions')
 
 default.options <- list(
+                rude=FALSE,
                 rude.cows=c('sodomized', 'sodomized-sheep', 'head-in')
             )
 
@@ -16,7 +17,6 @@ test_that("cowsayOptions(option) returns the value of that option", {
         expect_that(cowsayOptions(n), equals(default.options[[n]]),
                     info=sprintf("cowsayOptions('%s') doesn't retrieve the expected options", n))
     }
-    # can't test more than one option yet, because I only have one.
 })
 
 test_that("cowsayOptions(nonexistent.option) gives an error", {

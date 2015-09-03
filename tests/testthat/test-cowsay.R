@@ -129,9 +129,12 @@ test_that("randomcowsay randomizes the cow, style and think", {
   # can't really test if the `rude` argument is obeyed...
   # but if we sample twice as many cows as there are, surely we'll pick up a rude
   #  cow at least once (if it is broken)
+  o <- cowsayOptions('rude')
+  cowsayOptions('rude', TRUE)
   cows <- replicate(n, quiet.randomcowsay(msg.short, style='dead', think=FALSE, rude=FALSE))
   rude.cows <- vapply(cowsayOptions('rude.cows'), quiet.cowsay, 'template', message=msg.short, style='dead', think=FALSE)
   expect_that(any(cows %in% rude.cows), is_false())
+  cowsayOptions('rude', o)
   # unfortunately we can't try to check that there *is* a rude cow generated because they're just not very
   # frequent (only 3 in 40-something) so we can't really guarantee to get one.
 })

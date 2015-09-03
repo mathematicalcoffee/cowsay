@@ -1,12 +1,16 @@
 #' Querying/setting cowsay options
 #'
-#' The following `cowsay` options are avilable:
-#' * `rude.cows`: character vector (default: `c('sodomized', 'sodomized-sheep', 'head-in')`)
+#' The following cowsay options are avilable:
+#'
+#' \itemize{
+#' \item `rude`: boolean (default `FALSE`): whether to include rude cows by default (in \code{\link{randomcowsay}} and \code{\link{list.cows}}).
+#' \item `rude.cows`: character vector (default: \code{c('sodomized', 'sodomized-sheep', 'head-in')})
+#' }
 #'
 #' Note: this code is shamelessly adapted from the `panderOptions` function in the
 #' [pander](http://rapporter.github.io/pander/) package; it's just good and how
 #' I would have done it anyway. Thanks muchly, and kudos to the pander team.
-#' @references The corresponding function (`panderOptions`) of the pander package: https://github.com/Rapporter/pander/blob/master/R/options.R
+#' @references The corresponding function (`panderOptions`) of the pander package: \url{https://github.com/Rapporter/pander/blob/master/R/options.R}
 #' @param o option name (string). See below.
 #' @param value value to assign (optional)
 #' @examples \dontrun{

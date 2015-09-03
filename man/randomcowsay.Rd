@@ -5,7 +5,7 @@
 \title{cowsay with a random cow.}
 \usage{
 randomcowsay(message, cow = NULL, style = NULL, think = NULL,
-  rude = FALSE, ...)
+  rude = cowsayOptions("rude"), ...)
 }
 \arguments{
 \item{message}{{string} what to say}
@@ -39,6 +39,8 @@ Note that if you supply `eyes` or `tongue`, the style overrides these if it
 randomcowsay('MOOOOO')
 }
 \seealso{
+\code{\link{cowsayOptions}} to change whether rude cows are included by default, and which cows are rude.
+
 Other cowsay: \code{\link{cowsay}}
 }
 

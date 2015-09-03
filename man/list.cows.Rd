@@ -4,7 +4,7 @@
 \alias{list.cows}
 \title{Lists the currently-installed cows.}
 \usage{
-list.cows(path = NULL, rude = FALSE, ...)
+list.cows(path = NULL, rude = cowsayOptions("rude"), ...)
 }
 \arguments{
 \item{path}{{character vector|NULL} path(s) to list the cows under. If NULL,
@@ -21,7 +21,7 @@ a character vector of cow files found in the path.
 This lists all the `*.cow`, `*.rcow` files found under `path`.
 }
 \seealso{
-\code{\link[base]{list.files}}
+\code{\link[base]{list.files}}; \code{\link{cowsayOptions}} to change whether rude cows are included by default, and which cows are rude.
 
 Other cow styles: \code{\link{cow.styles}};
   \code{\link{get.cowfile}}; \code{\link{get.cowpaths}}

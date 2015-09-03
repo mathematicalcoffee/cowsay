@@ -12,7 +12,6 @@ get.cowpaths()
 \description{
 * if environment variable `$COWPATH` is set, we use that.
 * we always include the cows installed with this package.
-* we do NOT include '/usr/share/cowsay/cows'.
 }
 \details{
 Order matters; if a particular cow is found in one of the earlier paths, we

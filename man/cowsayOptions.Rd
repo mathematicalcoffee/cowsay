@@ -12,10 +12,14 @@ cowsayOptions(o, value)
 \item{value}{value to assign (optional)}
 }
 \description{
-The following `cowsay` options are avilable:
-* `rude.cows`: character vector (default: `c('sodomized', 'sodomized-sheep', 'head-in')`)
+The following cowsay options are avilable:
 }
 \details{
+\itemize{
+\item `rude`: boolean (default `FALSE`): whether to include rude cows by default (in \code{\link{randomcowsay}} and \code{\link{list.cows}}).
+\item `rude.cows`: character vector (default: \code{c('sodomized', 'sodomized-sheep', 'head-in')})
+}
+
 Note: this code is shamelessly adapted from the `panderOptions` function in the
 [pander](http://rapporter.github.io/pander/) package; it's just good and how
 I would have done it anyway. Thanks muchly, and kudos to the pander team.
@@ -28,6 +32,6 @@ cowsayOptions('rude.cows', c(cowsayOptions('rude.cows'), 'kiss'))
 }
 }
 \references{
-The corresponding function (`panderOptions`) of the pander package: https://github.com/Rapporter/pander/blob/master/R/options.R
+The corresponding function (`panderOptions`) of the pander package: \url{https://github.com/Rapporter/pander/blob/master/R/options.R}
 }
 
