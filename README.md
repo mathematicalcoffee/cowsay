@@ -194,3 +194,18 @@ Meaning:
 * release branches must branch from 'develop' and must merge back into 'develop' and 'master'. Named `release-*`.
   "The key moment to branch off a new release branch from `develop` is when develop (almost) reflects the desired state of the new release". Then you do stuff like bump version numbers etc on the release branch. When ready, merge the release branch into master and tag. Then also merge this branch into develop, and DELETE the release branch.
 * hotfix branches are `hotfix-*`. Branch off from `master`, merge into `develop` and `master`. Unplanned fixes to a live production version.
+
+Deleting a branch: we tag them first so if we want, we can go back to the point that the branches were.
+Following [this stackoverflow answer](http://stackoverflow.com/questions/10242924/how-to-close-a-branch-without-removing-it-from-history-in-git):
+
+```
+git checkout <branchname>
+git tag archive/<branchname> <branchname>
+git checkout master
+# delete
+git branch -d <branchname>
+git push origin :<branchname>
+```
+
+So that if we wish to go back to the last commit of that branch we can find the tag `archive/<branchname>`.
+Unsure if this is useful, but I'll try it for a bit and see.
