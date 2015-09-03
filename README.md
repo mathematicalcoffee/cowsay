@@ -205,7 +205,7 @@ Meaning:
 
 * branch 'master' is always production ready. We **only** merge it when it's production-ready.
 * branch 'develop' for developing, if you merge with master it means that's a release
-* feature branches must branch from 'develop' and must merge back into 'develop' (`merge --no-ff myfeature`; delete once done)
+* feature branches must branch from 'develop' and must merge back into 'develop' **and also perl-cows** (to keep it in sync while preserving the perl cow support) (`merge --no-ff myfeature`; delete once done)
 * release branches must branch from 'develop' and must merge back into 'develop' and 'master'. Named `release-*`.
   "The key moment to branch off a new release branch from `develop` is when develop (almost) reflects the desired state of the new release". Then you do stuff like bump version numbers etc on the release branch. When ready, merge the release branch into master and tag. Then also merge this branch into develop, and DELETE the release branch.
 * hotfix branches are `hotfix-*`. Branch off from `master`, merge into `develop` and `master`. Unplanned fixes to a live production version.
