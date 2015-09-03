@@ -5,7 +5,7 @@
 #' @param cow {string} path to a cow file to use, or name of a pre-installed cow (see
 #'             \code{\link{list.cows}})
 #' @param wrap {integer} number of characters to wrap the message at (-1 not to wrap)
-#'             Note that if not explicity specified, this will set `wrap=FALSE`
+#'             Note that if not explicity specified, this will set `wrap=-1`
 #'             if the input `message` has a specific `print` method (so that, for
 #'             example, `cowsay`-ing the results of a t-test will not wrap and
 #'             mess up the output).
@@ -37,8 +37,8 @@
 #' cowsay('moooo', eyes='Oo')
 #' 
 #' # let's cowsay some more interesting things.
-#' Note this doesn't wrap even though the length exceeds the default (60 characters);
-#'  this is done automagically to avoid messed up output.
+#' Note this doesn't wrap even though the length might exceed your `getOption('wrap')`.
+#'  This is done automagically to avoid messed up output.
 #' cowsay(head(mtcars))
 #' # if `wrap` is explicity provided, we can override that.
 #' cowsay(head(mtcars), wrap=60)
@@ -48,7 +48,7 @@
 #' library(fortunes)
 #' cowsay(fortune())
 #' }
-cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=60,
+cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=getOption('width'),
                     think=F,
                     style=c('borg', 'dead', 'default', 'greedy', 'paranoid', 'stoned', 'tired', 'wired', 'young')) {
 
@@ -80,9 +80,12 @@ cowsay <- function (message, cow='default', eyes='oo', tongue='  ', wrap=60,
     # get the speech bubble
     # we assume that if there are multiple elements of `message` they are each
     # on their own line.
-    message <- get.message(message, store.print.method=TRUE)
+    if (wrap > 0)
+        message <- get.message(message, store.print.method=TRUE, width=wrap)
+    else
+        message <- get.message(message, store.print.method=TRUE)
     if (!is.null(attr(message, 'print.method'))) {
-        if (missing(wrap)) wrap <- 0
+        if (missing(wrap)) wrap <- -1
         attr(message, 'print.method') <- NULL
     }
     if (wrap > 0)

@@ -60,6 +60,7 @@ gsubv <- function (patterns, replacements, x, ...) {
 #' @param x {character vector} thing to convert to character.
 #' @param store.print.method {boolean} whether to store the name of the 'print'
 #'         method used, if any (default `FALSE`).
+#' @param ... passed on to the `print` method (e.g. a `width` argument)
 #' @return {character vector}
 #'  If `x` is a character, returns `x`.  
 #'  If `x` has a 'print' method ([`has.print`][has.print]), we capture the output
@@ -73,14 +74,14 @@ gsubv <- function (patterns, replacements, x, ...) {
 #' cat(as.character(m), sep='\n') # with
 #' cat(get.message(m), sep='\n')
 #' @family utility functions
-get.message <- function (x, store.print.method=FALSE) {
+get.message <- function (x, store.print.method=FALSE, ...) {
     # if `x` is character, leave as-is.
     # otherwise, if it has a 'print' method, capture that output.
     # otherwise, use `as.character`.
     if (is.character(x))
         return(x)
     if ((m <- has.print(x, return.method=TRUE)) != FALSE) {
-        o <- capture.output(print(x))
+        o <- capture.output(print(x, ...))
         if (store.print.method)
             attr(o, 'print.method') <- m
         return(o)
