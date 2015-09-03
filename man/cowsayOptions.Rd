@@ -2,7 +2,7 @@
 % Please edit documentation in R/options.r
 \name{cowsayOptions}
 \alias{cowsayOptions}
-\title{Querying/setting cowsay options.}
+\title{Querying/setting cowsay options}
 \usage{
 cowsayOptions(o, value)
 }
@@ -24,7 +24,7 @@ I would have done it anyway. Thanks muchly, and kudos to the pander team.
 \dontrun{
 cowsayOptions()
 cowsayOptions('rude.cows')
-cowsayOptions('rude.cows', c(cowsayOptions('rude.cows'), 'kissing'))
+cowsayOptions('rude.cows', c(cowsayOptions('rude.cows'), 'kiss'))
 }
 }
 \references{

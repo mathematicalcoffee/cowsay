@@ -1,4 +1,4 @@
-#' Querying/setting cowsay options.
+#' Querying/setting cowsay options
 #'
 #' The following `cowsay` options are avilable:
 #' * `rude.cows`: character vector (default: `c('sodomized', 'sodomized-sheep', 'head-in')`)
