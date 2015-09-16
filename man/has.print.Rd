@@ -2,32 +2,41 @@
 % Please edit documentation in R/utility.r
 \name{has.print}
 \alias{has.print}
-\title{Does this object have a 'print' method?}
+\title{Does this object have a 'print' method? (or 'show', for S4)?}
 \usage{
 has.print(x, return.method = FALSE)
 }
 \arguments{
 \item{x}{{anything} an object that we will query for a print method.}
 
-\item{return.name}{{boolean} whether to return the method name, if one is found.}
+\item{return.method}{{boolean} whether to return the method name, if one is found.}
 }
 \value{
 {boolean|character} If `x` has no `print` method, returns `FALSE`.
-  If `x` *does* have a `print` method, returns either `TRUE` (if `return.name=FALSE`,
-  the default) or the name of the method (`return.name=TRUE`).
+  If `x` *does* have print/show method(s), returns either `TRUE` (if `return.method=FALSE`,
+  the default) or the name of the first method (`return.method=TRUE`).
 }
 \description{
-Does this object have a 'print' method?
+Does this object have a 'print' method? (or 'show', for S4)?
 }
 \details{
-This checks for the existence of an S3 or S4 `print` method on any of the
- classes of `x`.
+This checks for the existence of an S3 `print` method, or an S4 `show`
+ method on any of the classes of `x`. We ignore 'show,oldClass-method'.
 }
 \examples{
 # this returns TRUE as print.lm exists
-has.print(lm(Sepal.Length ~ Species, iris))
+cowsay:::has.print(lm(Sepal.Length ~ Species, iris))
 # this returns TRUE because although print.mlm doesn't exist, print.lm *does*.
-has.print(lm(cbind(Petal.Length, Petal.Width) ~ Species, iris))
+cowsay:::has.print(lm(cbind(Petal.Length, Petal.Width) ~ Species, iris))
+
+# Works for S4! (I think)
+if (require(methods, quietly=T)) {
+    setGeneric('print')
+    class(print) # should be standardGeneric
+    methods(class='standardGeneric') # 'show' is one of them
+    cowsay:::has.print(print)
+    cowsay:::has.print(print, return.method=TRUE) # show,genericFunction-method
+}
 }
 \seealso{
 [`methods`](utils::methods)

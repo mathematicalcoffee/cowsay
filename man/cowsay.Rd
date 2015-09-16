@@ -59,8 +59,8 @@ cowsay('mooooo')
 cowsay('moooo', eyes='Oo')
 
 # let's cowsay some more interesting things.
-Note this doesn't wrap even though the length might exceed your `getOption('wrap')`.
- This is done automagically to avoid messed up output.
+# Note this doesn't wrap even though the length might exceed your `getOption('wrap')`.
+#  This is done automagically to avoid messed up output.
 cowsay(head(mtcars))
 # if `wrap` is explicity provided, we can override that.
 cowsay(head(mtcars), wrap=60)

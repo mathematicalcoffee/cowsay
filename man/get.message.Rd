@@ -20,6 +20,8 @@ method used, if any (default `FALSE`).}
  If `x` has a 'print' method ([`has.print`][has.print]), we capture the output
   of `print(x)`. This may have multiple elements (one per line of output).
  Otherwise, we use `as.character`.
+If `store.print.method=TRUE`, the return value has an attribute
+'print.method' with the name of the method (see `::has.print`).
 }
 \description{
 Attempts to convert `x` to character better than `as.character`.
@@ -31,7 +33,7 @@ The idea is to get a nicely-printed cowsay message regardless of input class.
 m <- lm(Sepal.Length ~ Species, iris)
 # compare
 cat(as.character(m), sep='\\n') # with
-cat(get.message(m), sep='\\n')
+cat(cowsay:::get.message(m), sep='\\n')
 }
 \seealso{
 Other utility functions: \code{\link{gsubv}};

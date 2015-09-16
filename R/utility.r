@@ -1,9 +1,9 @@
 #' Performs multiple sequential replacements
-#' 
+#'
 #' This modifies `x` replacing all occurences of `patterns` with `replacements`,
 #' working sequentially through the patterns and replacments (matching them up with
 #' each other).
-#' 
+#'
 #' @param patterns {character vector} the patterns to replace.
 #'  Regex is permitted. If shorter than `replacements`, it is recycled
 #'  to that length.
@@ -22,27 +22,27 @@
 #' sequentially.
 #' @examples
 #' gsubv('foo', 'bar', 'foobar') # barbar
-#' 
+#'
 #' # Multiple patterns/replacements
 #' gsubv(c('one', 'two'), c('un', 'deux'), 'one two three!')
 #' # [1] "un deux three!"
-#' 
+#'
 #' # Multiple replacements are done sequentially; be careful about the order
 #' gsubv(c('cone', 'one'), c('icecream waffle', 'a single'), 'one cone of cold')
 #' # [1] "a single icecream waffle of cold"
 #' gsubv(c('cone', 'one')[2:1], c('icecream waffle', 'a single')[2:1], 'one cone of cold')
 #' # [1] "a single ca single of cold"
-#' 
+#'
 #' # Replacements can be made on previous replacements
 #' gsubv(c('cat', 'dog'), c('ruler of dogs', 'puppy-wuppy'), 'A cat and a dog')
 #' # [1] "A ruler of puppy-wuppys and a puppy-wuppy"
 #' gsubv(c('cat', 'dog')[2:1], c('ruler of dogs', 'puppy-wuppy')[2:1], 'A cat and a dog')
 #' # [1] "A ruler of dogs and a puppy-wuppy"
-#' 
+#'
 #' # You can use regex of course, as usual.
 #' gsubv(c('o', '([bc])[ae]'), c('a', '\\1o'), 'raining bears and cats and dogs')
 #' # [1] "raining boars and cots and dags"
-#' 
+#'
 #' @seealso \code{\link{gsub}}
 #' @export
 #' @family utility functions
@@ -62,18 +62,21 @@ gsubv <- function (patterns, replacements, x, ...) {
 #'         method used, if any (default `FALSE`).
 #' @param ... passed on to the `print` method (e.g. a `width` argument)
 #' @return {character vector}
-#'  If `x` is a character, returns `x`.  
+#'  If `x` is a character, returns `x`.
 #'  If `x` has a 'print' method ([`has.print`][has.print]), we capture the output
 #'   of `print(x)`. This may have multiple elements (one per line of output).
 #'  Otherwise, we use `as.character`.
+#' If `store.print.method=TRUE`, the return value has an attribute
+#' 'print.method' with the name of the method (see `::has.print`).
 #' @details
 #' The idea is to get a nicely-printed cowsay message regardless of input class.
 #' @examples
 #' m <- lm(Sepal.Length ~ Species, iris)
 #' # compare
 #' cat(as.character(m), sep='\n') # with
-#' cat(get.message(m), sep='\n')
+#' cat(cowsay:::get.message(m), sep='\n')
 #' @family utility functions
+#' @importFrom utils capture.output
 get.message <- function (x, store.print.method=FALSE, ...) {
     # if `x` is character, leave as-is.
     # otherwise, if it has a 'print' method, capture that output.
@@ -81,7 +84,7 @@ get.message <- function (x, store.print.method=FALSE, ...) {
     if (is.character(x))
         return(x)
     if ((m <- has.print(x, return.method=TRUE)) != FALSE) {
-        o <- capture.output(print(x, ...))
+        o <- utils::capture.output(print(x, ...))
         if (store.print.method)
             attr(o, 'print.method') <- m
         return(o)
@@ -109,28 +112,39 @@ wrap.message <- function (x, width=0.8 * getOption("width")) {
 }
 
 
-#' Does this object have a 'print' method?
+#' Does this object have a 'print' method? (or 'show', for S4)?
 #' @param x {anything} an object that we will query for a print method.
-#' @param return.name {boolean} whether to return the method name, if one is found.
+#' @param return.method {boolean} whether to return the method name, if one is found.
 #' @return {boolean|character} If `x` has no `print` method, returns `FALSE`.
-#'   If `x` *does* have a `print` method, returns either `TRUE` (if `return.name=FALSE`,
-#'   the default) or the name of the method (`return.name=TRUE`).
+#'   If `x` *does* have print/show method(s), returns either `TRUE` (if `return.method=FALSE`,
+#'   the default) or the name of the first method (`return.method=TRUE`).
 #' @details
-#'  This checks for the existence of an S3 or S4 `print` method on any of the
-#'  classes of `x`.
+#'  This checks for the existence of an S3 `print` method, or an S4 `show`
+#'  method on any of the classes of `x`. We ignore 'show,oldClass-method'.
 #' @seealso [`methods`](utils::methods)
 #' @family utility functions
 #' @examples
 #' # this returns TRUE as print.lm exists
-#' has.print(lm(Sepal.Length ~ Species, iris))
+#' cowsay:::has.print(lm(Sepal.Length ~ Species, iris))
 #' # this returns TRUE because although print.mlm doesn't exist, print.lm *does*.
-#' has.print(lm(cbind(Petal.Length, Petal.Width) ~ Species, iris))
+#' cowsay:::has.print(lm(cbind(Petal.Length, Petal.Width) ~ Species, iris))
+#'
+#' # Works for S4! (I think)
+#' if (require(methods, quietly=T)) {
+#'     setGeneric('print')
+#'     class(print) # should be standardGeneric
+#'     methods(class='standardGeneric') # 'show' is one of them
+#'     cowsay:::has.print(print)
+#'     cowsay:::has.print(print, return.method=TRUE) # show,genericFunction-method
+#' }
 has.print <- function (x, return.method=FALSE) {
     for (cls in class(x)) {
         m <- attr(utils::methods(class=cls), 'info')
-        if (length(o <- rownames(m)[m$generic == 'print']))
+        o <- rownames(m)[(m$generic == 'print' & !m$isS4) | (m$generic == 'show' & m$isS4)]
+        o <- setdiff(o, 'show,oldClass-method') # not really sure what this is
+        if (length(o))
             if (return.method)
-                return(o)
+                return(o[1])
             else
                 return(TRUE)
     }
