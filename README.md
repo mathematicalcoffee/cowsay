@@ -215,10 +215,13 @@ Deleting a branch: we tag them first so if we want, we can go back to the point 
 ```
 git checkout <branchname>
 git tag archive/<branchname> <branchname>
-git checkout master
+git checkout develop
+# merge
+git merge <branchname>
 # delete
 git branch -d <branchname>
 git push origin :<branchname>
+git push --tags
 ```
 
 So that if we wish to go back to the last commit of that branch we can find the tag `archive/<branchname>`. Unsure if this is useful, but I'll try it for a bit and see.
