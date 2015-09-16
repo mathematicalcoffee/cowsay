@@ -1,13 +1,15 @@
 Package: cowsay
 Type: Package
-Title: An R version of cowsay.
-Version: 1.0.1
-Date: 2015-01-16
+Title: An R version of cowsay
+Version: 1.2.0.9000
+Date: 2015-09-16
 Author: Amy Chan
 Maintainer: Amy Chan <mathematical.coffee@gmail.com>
 Description: This is an R version of the original cowsay program written in
     Perl by Tony Monroe.
 License: GPL
+Imports:
+    utils
 Suggests:
     fortunes,
     testthat
